@@ -7,10 +7,10 @@ import {
   TopBar,
 } from '@shopify/polaris';
 import {
-  HomeMajor,
-  AnalyticsMajor,
-  SettingsMajor,
-  CustomersMajor,
+  HomeIcon,
+  ChartLineIcon,
+  SettingsIcon,
+  PersonFilledIcon,
 } from '@shopify/polaris-icons';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import Dashboard from './components/Dashboard';
@@ -28,22 +28,22 @@ const App: React.FC = () => {
         items={[
           {
             label: 'Dashboard',
-            icon: HomeMajor,
+            icon: HomeIcon,
             url: '/',
           },
           {
             label: 'Analytics',
-            icon: AnalyticsMajor,
+            icon: ChartLineIcon,
             url: '/analytics',
           },
           {
             label: 'Customers',
-            icon: CustomersMajor,
+            icon: PersonFilledIcon,
             url: '/customers',
           },
           {
             label: 'Settings',
-            icon: SettingsMajor,
+            icon: SettingsIcon,
             url: '/settings',
           },
         ]}
