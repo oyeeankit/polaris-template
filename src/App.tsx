@@ -22,23 +22,35 @@ import DualHome from './components/dual/Home';
 import DualSettings from './components/dual/Settings';
 import DualAccounts from './components/dual/Accounts';
 import DualSupport from './components/dual/Support';
+import FloHome from './components/flo/Home';
+import FloSettings from './components/flo/Settings';
+import FloAccounts from './components/flo/Accounts';
+import FloSupport from './components/flo/Support';
 
 
 // Wrapper component to access location
 const AppContent: React.FC = () => {
   const [isNavigationOpen, setIsNavigationOpen] = useState<boolean>(true);
   const [isDualExpanded, setIsDualExpanded] = useState<boolean>(false);
+  const [isFloExpanded, setIsFloExpanded] = useState<boolean>(false);
   const location = useLocation();
   
-  // Check if URL contains '/dual/' and set isDualExpanded accordingly
+  // Check if URL contains '/dual/' or '/flo/' and set expanded state accordingly
   useEffect(() => {
     if (location.pathname.includes('/dual/')) {
       setIsDualExpanded(true);
+    }
+    if (location.pathname.includes('/flo/')) {
+      setIsFloExpanded(true);
     }
   }, [location.pathname]);
  
   const handleDualToggle = () => {
     setIsDualExpanded(!isDualExpanded);
+  };
+
+  const handleFloToggle = () => {
+    setIsFloExpanded(!isFloExpanded);
   };
 
   const navigationMarkup = (
@@ -51,6 +63,13 @@ const AppContent: React.FC = () => {
             onClick: handleDualToggle,
             expanded: isDualExpanded,
             matches: false,
+          },
+         {
+            label: 'Flo',
+            icon: AppsIcon,
+            onClick: handleFloToggle,
+            expanded: isFloExpanded,
+            matches: false,
           }
         ]}
       />
@@ -61,18 +80,49 @@ const AppContent: React.FC = () => {
             {
               label: 'Home',
               url: '/dual/home',
+              icon: HomeIcon,
             },
             {
               label: 'Settings',
               url: '/dual/settings',
+              icon: SettingsIcon,
             },
             {
               label: 'Accounts',
               url: '/dual/accounts',
+              icon: PersonFilledIcon,
             },
             {
               label: 'Support',
               url: '/dual/support',
+              icon: ChartLineIcon,
+            },
+          ]}
+        />
+      )}
+      {isFloExpanded && (
+        <Navigation.Section
+          title="Flo"
+          items={[
+            {
+              label: 'Home',
+              url: '/flo/home',
+              icon: HomeIcon,
+            },
+            {
+              label: 'Settings',
+              url: '/flo/settings',
+              icon: SettingsIcon,
+            },
+            {
+              label: 'Accounts',
+              url: '/flo/accounts',
+              icon: PersonFilledIcon,
+            },
+            {
+              label: 'Support',
+              url: '/flo/support',
+              icon: ChartLineIcon,
             },
           ]}
         />
@@ -94,17 +144,21 @@ const AppContent: React.FC = () => {
       showMobileNavigation={isNavigationOpen}
       onNavigationDismiss={() => setIsNavigationOpen(false)}
     >
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/customers" element={<Customers />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/history" element={<div>History Page</div>} />
-        <Route path="/dual/home" element={<DualHome />} />
-        <Route path="/dual/settings" element={<DualSettings />} />
-        <Route path="/dual/accounts" element={<DualAccounts />} />
-        <Route path="/dual/support" element={<DualSupport />} />
-      </Routes>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/customers" element={<Customers />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/history" element={<div>History Page</div>} />
+            <Route path="/dual/home" element={<DualHome />} />
+            <Route path="/dual/settings" element={<DualSettings />} />
+            <Route path="/dual/accounts" element={<DualAccounts />} />
+            <Route path="/dual/support" element={<DualSupport />} />
+            <Route path="/flo/home" element={<FloHome />} />
+            <Route path="/flo/settings" element={<FloSettings />} />
+            <Route path="/flo/accounts" element={<FloAccounts />} />
+            <Route path="/flo/support" element={<FloSupport />} />
+          </Routes>
     </Frame>
   );
 };
