@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import {
   AppProvider,
   Frame,
@@ -24,11 +24,19 @@ import DualAccounts from './components/dual/Accounts';
 import DualSupport from './components/dual/Support';
 
 
-const App: React.FC = () => {
+// Wrapper component to access location
+const AppContent: React.FC = () => {
   const [isNavigationOpen, setIsNavigationOpen] = useState<boolean>(true);
-
   const [isDualExpanded, setIsDualExpanded] = useState<boolean>(false);
-
+  const location = useLocation();
+  
+  // Check if URL contains '/dual/' and set isDualExpanded accordingly
+  useEffect(() => {
+    if (location.pathname.includes('/dual/')) {
+      setIsDualExpanded(true);
+    }
+  }, [location.pathname]);
+ 
   const handleDualToggle = () => {
     setIsDualExpanded(!isDualExpanded);
   };
@@ -43,58 +51,7 @@ const App: React.FC = () => {
             onClick: handleDualToggle,
             expanded: isDualExpanded,
             matches: false,
-          },
-          {
-            label: 'Home',
-            url: '/dual/home',
-            icon:AppsIcon
-          },
-          {
-            label: 'Settings',
-            url: '/dual/settings',
-            icon:AppsIcon
-          },
-          {
-            label: 'Accounts',
-            url: '/dual/accounts',
-            icon:AppsIcon
-          },
-          {
-            label: 'Support',
-            url: '/dual/support',
-            icon:AppsIcon
-          },
-          {
-            label: '================',
-            icon: SettingsIcon
-          },
-          {
-            label: 'Flo',
-            icon: AppsIcon,
-            onClick: handleDualToggle,
-            expanded: isDualExpanded,
-            matches: false,
-          },
-          {
-            label: 'Home',
-            icon:AppsIcon,
-            url: '/dual/home',
-          },
-          {
-            label: 'Settings',
-            icon:AppsIcon,
-            url: '/dual/settings',
-          },
-          {
-            label: 'Accounts',
-            icon:AppsIcon,
-            url: '/dual/accounts',
-          },
-          {
-            label: 'Support',
-            icon:AppsIcon,
-            url: '/dual/support',
-          },
+          }
         ]}
       />
       {isDualExpanded && (
@@ -131,26 +88,33 @@ const App: React.FC = () => {
   );
 
   return (
+    <Frame
+      topBar={topBarMarkup}
+      navigation={navigationMarkup}
+      showMobileNavigation={isNavigationOpen}
+      onNavigationDismiss={() => setIsNavigationOpen(false)}
+    >
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/customers" element={<Customers />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/history" element={<div>History Page</div>} />
+        <Route path="/dual/home" element={<DualHome />} />
+        <Route path="/dual/settings" element={<DualSettings />} />
+        <Route path="/dual/accounts" element={<DualAccounts />} />
+        <Route path="/dual/support" element={<DualSupport />} />
+      </Routes>
+    </Frame>
+  );
+};
+
+// Main App component
+const App: React.FC = () => {
+  return (
     <AppProvider i18n={enTranslations}>
       <Router>
-        <Frame
-          topBar={topBarMarkup}
-          navigation={navigationMarkup}
-          showMobileNavigation={isNavigationOpen}
-          onNavigationDismiss={() => setIsNavigationOpen(false)}
-        >
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/customers" element={<Customers />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/history" element={<div>History Page</div>} />
-            <Route path="/dual/home" element={<DualHome />} />
-            <Route path="/dual/settings" element={<DualSettings />} />
-            <Route path="/dual/accounts" element={<DualAccounts />} />
-            <Route path="/dual/support" element={<DualSupport />} />
-          </Routes>
-        </Frame>
+        <AppContent />
       </Router>
     </AppProvider>
   );
