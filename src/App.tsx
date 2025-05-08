@@ -17,7 +17,7 @@ import Dashboard from './components/Dashboard';
 import Analytics from './components/Analytics';
 import Customers from './components/Customers';
 import Settings from './components/Settings';
-
+import Plans from './components/Plans';
 
 const App: React.FC = () => {
   const [isNavigationOpen, setIsNavigationOpen] = useState<boolean>(true);
@@ -46,6 +46,11 @@ const App: React.FC = () => {
             icon: SettingsIcon,
             url: '/settings',
           },
+          {
+            label: 'Plans',
+            icon: SettingsIcon,
+            url: '/plans',
+          },
         ]}
       />
     </Navigation>
@@ -72,6 +77,8 @@ const App: React.FC = () => {
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/customers" element={<Customers />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/plans" element={<Plans />} />
+            {/* Add more routes as needed */}
           </Routes>
         </Frame>
       </Router>
