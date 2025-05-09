@@ -16,9 +16,10 @@ import {
 const Home: React.FC = () => {
   const [appEmbedEnabled, setAppEmbedEnabled] = useState(false);
   const [documentViewed, setDocumentViewed] = useState(false);
+  const [isAppEmbedOn, setIsAppEmbedOn] = useState(false);
 
   // Calculate completed steps and progress
-  const completedSteps = (documentViewed ? 1 : 0) + (appEmbedEnabled ? 1 : 0);
+  const completedSteps = (documentViewed ? 1 : 0) + (isAppEmbedOn ? 1 : 0);
   const progress = completedSteps * 50; // 0%, 50%, or 100%
 
   const handleViewDocument = () => {
@@ -53,9 +54,9 @@ const Home: React.FC = () => {
                 <InlineStack align="space-between" blockAlign="center">
                   <InlineStack gap="200" blockAlign="center">
                     <Text as="h3" variant="headingMd">Currency Format Setup</Text>
-                    <Badge tone={documentViewed ? "success" : "attention"}>
-                      {documentViewed ? "Completed" : "Not Completed"}
-                    </Badge>
+                    {documentViewed && (
+                      <Badge tone="success">Read</Badge>
+                    )}
                   </InlineStack>
                 </InlineStack>
                 <TextContainer>
@@ -85,9 +86,9 @@ const Home: React.FC = () => {
                 <InlineStack align="space-between" blockAlign="center">
                   <InlineStack gap="200" blockAlign="center">
                     <Text as="h3" variant="headingMd">App Embed</Text>
-                    <Badge tone={appEmbedEnabled ? "success" : "critical"}>
-                      {appEmbedEnabled ? "Enabled" : "Disabled"}
-                    </Badge>
+                    {isAppEmbedOn && (
+                      <Badge tone="success">Enable</Badge>
+                    )}
                   </InlineStack>
                 </InlineStack>
                 <TextContainer>
@@ -101,6 +102,12 @@ const Home: React.FC = () => {
                       onClick={() => {
                         // Simulate checking if app is embedded in Shopify
                         setAppEmbedEnabled(true);
+                        
+                        // Check if app embed is enabled in Shopify settings
+                        // In a real app, this would be an API call to check Shopify settings
+                        // For this example, we'll simulate it by checking appEmbedEnabled
+                        setIsAppEmbedOn(true);
+                        
                         // In a real app, this would redirect to Shopify admin app embed page
                         window.open("https://admin.shopify.com/settings/apps/embedded", "_blank");
                       }} 
