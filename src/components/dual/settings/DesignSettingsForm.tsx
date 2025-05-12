@@ -31,9 +31,9 @@ const DesignSettingsForm: React.FC = () => {
   
   // Tax Included Price Color
   const [taxIncludedPriceColor, setTaxIncludedPriceColor] = useState({
-    hue: 0,
-    brightness: 0,
-    saturation: 0,
+    hue: 120,
+    brightness: 0.5,
+    saturation: 0.8,
     alpha: 1
   });
   
@@ -52,9 +52,9 @@ const DesignSettingsForm: React.FC = () => {
   
   // Tax Excluded Price Color
   const [taxExcludedPriceColor, setTaxExcludedPriceColor] = useState({
-    hue: 0,
-    brightness: 0,
-    saturation: 0,
+    hue: 240,
+    brightness: 0.5,
+    saturation: 0.8,
     alpha: 1
   });
 
@@ -72,19 +72,17 @@ const DesignSettingsForm: React.FC = () => {
     [],
   );
 
-  const fontSizeOptions = [
-    { label: '7px', value: '7px' },
-    { label: '8px', value: '8px' },
-    { label: '9px', value: '9px' },
-    { label: '10px', value: '10px' },
-    { label: '11px', value: '11px' },
-    { label: '12px', value: '12px' },
-    { label: '13px', value: '13px' },
-    { label: '14px', value: '14px' },
-    { label: '16px', value: '16px' },
-    { label: '18px', value: '18px' },
-    { label: '20px', value: '20px' },
-  ];
+  // Generate font size options from 7px to 30px with 0.5px increments
+  const generateFontSizeOptions = () => {
+    const options = [];
+    for (let size = 7; size <= 30; size += 0.5) {
+      const value = `${size}px`;
+      options.push({ label: value, value });
+    }
+    return options;
+  };
+  
+  const fontSizeOptions = generateFontSizeOptions();
 
   const handleSave = () => {
     // Save design settings logic would go here
@@ -116,7 +114,7 @@ const DesignSettingsForm: React.FC = () => {
     });
   };
 
-  // Helper function to render color preview
+  // Helper function to render color preview following Polaris guidelines
   const renderColorPreview = (color: {hue: number, brightness: number, saturation: number, alpha: number}) => {
     const hsbColor = `hsla(${color.hue}, ${color.saturation * 100}%, ${color.brightness * 100}%, ${color.alpha})`;
     return (
@@ -125,9 +123,14 @@ const DesignSettingsForm: React.FC = () => {
           backgroundColor: hsbColor,
           width: '24px',
           height: '24px',
-          borderRadius: '3px',
-          border: '1px solid #ddd'
+          borderRadius: '50%',
+          border: '1px solid var(--p-border-subdued)',
+          boxShadow: 'var(--p-shadow-xs)',
+          display: 'inline-block',
+          verticalAlign: 'middle',
+          marginLeft: '8px'
         }}
+        aria-label="Selected color"
       />
     );
   };
@@ -141,7 +144,7 @@ const DesignSettingsForm: React.FC = () => {
             <Text as="h3" variant="headingMd">Tax Included Price Font Size</Text>
             <Divider />
             <Box paddingBlockStart="300">
-              <InlineGrid columns={{ xs: '1fr', sm: '1fr 1fr 1fr' }} gap="300">
+              <InlineGrid columns={{ xs: '1fr', md: '1fr 1fr 1fr' }} gap="300">
                 <Box>
                   <Text as="p" variant="bodyMd">Home Page</Text>
                   <Select
@@ -178,7 +181,7 @@ const DesignSettingsForm: React.FC = () => {
 
           {/* Tax Included Label */}
           <Box paddingBlockEnd="400">
-            <InlineGrid columns={{ xs: '1fr', sm: '1fr 2fr' }} gap="400">
+              <InlineGrid columns={{ xs: '1fr', md: '1fr 2fr' }} gap="400">
               <Box>
                 <Text as="h3" variant="headingMd">Tax included Label</Text>
               </Box>
@@ -200,7 +203,7 @@ const DesignSettingsForm: React.FC = () => {
             <Text as="h3" variant="headingMd">Tax Included Label Font Size</Text>
             <Divider />
             <Box paddingBlockStart="300">
-              <InlineGrid columns={{ xs: '1fr', sm: '1fr 1fr 1fr' }} gap="300">
+              <InlineGrid columns={{ xs: '1fr', md: '1fr 1fr 1fr' }} gap="300">
                 <Box>
                   <Text as="p" variant="bodyMd">Home Page</Text>
                   <Select
@@ -237,32 +240,32 @@ const DesignSettingsForm: React.FC = () => {
 
           {/* Tax included Price Color */}
           <Box paddingBlockEnd="400">
-            <InlineGrid columns={{ xs: '1fr', sm: '1fr 2fr' }} gap="400">
+            <InlineGrid columns={{ xs: '1fr', md: '1fr 2fr' }} gap="400">
               <Box>
                 <Text as="h3" variant="headingMd">Tax included Price Color</Text>
               </Box>
               <Box>
-                <Popover
-                  active={taxIncludedColorPopoverActive}
-                  activator={
-                    <Button onClick={toggleTaxIncludedColorPopover}>
-                      Select color
-                    </Button>
-                  }
-                  onClose={toggleTaxIncludedColorPopover}
-                >
-                  <Popover.Pane>
-                    <Box padding="400">
-                      <ColorPicker onChange={setTaxIncludedPriceColor} color={taxIncludedPriceColor} />
-                    </Box>
-                  </Popover.Pane>
-                </Popover>
-                <Box paddingBlockStart="200">
-                  <InlineStack gap="200" align="center">
-                    {renderColorPreview(taxIncludedPriceColor)}
-                    <Text as="span" variant="bodyMd">Selected color</Text>
-                  </InlineStack>
-                </Box>
+                <InlineStack gap="200" align="center" blockAlign="center">
+                  <Popover
+                    active={taxIncludedColorPopoverActive}
+                    activator={
+                      <Button onClick={toggleTaxIncludedColorPopover}>
+                        Select color
+                      </Button>
+                    }
+                    onClose={toggleTaxIncludedColorPopover}
+                  >
+                    <Popover.Pane>
+                      <Box padding="400">
+                        <ColorPicker 
+                          onChange={setTaxIncludedPriceColor} 
+                          color={taxIncludedPriceColor} 
+                        />
+                      </Box>
+                    </Popover.Pane>
+                  </Popover>
+                  {renderColorPreview(taxIncludedPriceColor)}
+                </InlineStack>
               </Box>
             </InlineGrid>
           </Box>
@@ -272,7 +275,7 @@ const DesignSettingsForm: React.FC = () => {
             <Text as="h3" variant="headingMd">Tax Excluded Price Font Size</Text>
             <Divider />
             <Box paddingBlockStart="300">
-              <InlineGrid columns={{ xs: '1fr', sm: '1fr 1fr 1fr' }} gap="300">
+              <InlineGrid columns={{ xs: '1fr', md: '1fr 1fr 1fr' }} gap="300">
                 <Box>
                   <Text as="p" variant="bodyMd">Home Page</Text>
                   <Select
@@ -309,7 +312,7 @@ const DesignSettingsForm: React.FC = () => {
 
           {/* Tax Excluded Label */}
           <Box paddingBlockEnd="400">
-            <InlineGrid columns={{ xs: '1fr', sm: '1fr 2fr' }} gap="400">
+            <InlineGrid columns={{ xs: '1fr', md: '1fr 2fr' }} gap="400">
               <Box>
                 <Text as="h3" variant="headingMd">Tax Excluded Label</Text>
               </Box>
@@ -331,7 +334,7 @@ const DesignSettingsForm: React.FC = () => {
             <Text as="h3" variant="headingMd">Tax Excluded Label Font Size</Text>
             <Divider />
             <Box paddingBlockStart="300">
-              <InlineGrid columns={{ xs: '1fr', sm: '1fr 1fr 1fr' }} gap="300">
+              <InlineGrid columns={{ xs: '1fr', md: '1fr 1fr 1fr' }} gap="300">
                 <Box>
                   <Text as="p" variant="bodyMd">Home Page</Text>
                   <Select
@@ -366,41 +369,44 @@ const DesignSettingsForm: React.FC = () => {
             </Box>
           </Box>
 
+
           {/* Tax excluded Price Color */}
           <Box paddingBlockEnd="400">
-            <InlineGrid columns={{ xs: '1fr', sm: '1fr 2fr' }} gap="400">
+            <InlineGrid columns={{ xs: '1fr', md: '1fr 2fr' }} gap="400">
               <Box>
                 <Text as="h3" variant="headingMd">Tax excluded Price Color</Text>
               </Box>
               <Box>
-                <Popover
-                  active={taxExcludedColorPopoverActive}
-                  activator={
-                    <Button onClick={toggleTaxExcludedColorPopover}>
-                      Select color
-                    </Button>
-                  }
-                  onClose={toggleTaxExcludedColorPopover}
-                >
-                  <Popover.Pane>
-                    <Box padding="400">
-                      <ColorPicker onChange={setTaxExcludedPriceColor} color={taxExcludedPriceColor} />
-                    </Box>
-                  </Popover.Pane>
-                </Popover>
-                <Box paddingBlockStart="200">
-                  <InlineStack gap="200" align="center">
-                    {renderColorPreview(taxExcludedPriceColor)}
-                    <Text as="span" variant="bodyMd">Selected color</Text>
-                  </InlineStack>
-                </Box>
+                <InlineStack gap="200" align="center" blockAlign="center">
+                  <Popover
+                    active={taxExcludedColorPopoverActive}
+                    activator={
+                      <Button onClick={toggleTaxExcludedColorPopover}>
+                        Select color
+                      </Button>
+                    }
+                    onClose={toggleTaxExcludedColorPopover}
+                  >
+                    <Popover.Pane>
+                      <Box padding="400">
+                        <ColorPicker 
+                          onChange={setTaxExcludedPriceColor} 
+                          color={taxExcludedPriceColor} 
+                        />
+                      </Box>
+                    </Popover.Pane>
+                  </Popover>
+                  {renderColorPreview(taxExcludedPriceColor)}
+                </InlineStack>
               </Box>
             </InlineGrid>
           </Box>
         </FormLayout>
 
         <Box paddingBlockStart="400">
-          <Button variant="primary" onClick={handleSave}>Save Design Settings</Button>
+          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+            <Button variant="primary" onClick={handleSave}>Save</Button>
+          </div>
         </Box>
       </BlockStack>
     </Card>
