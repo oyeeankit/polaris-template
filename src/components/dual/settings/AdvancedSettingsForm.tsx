@@ -83,7 +83,7 @@ const AdvancedSettingsForm: React.FC = () => {
         </Box>
 
         <Box paddingBlockStart="400">
-          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Button variant="primary" onClick={handleSave}>Save</Button>
           </div>
         </Box>

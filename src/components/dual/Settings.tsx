@@ -37,17 +37,6 @@ const Settings: React.FC = () => {
             </Suspense>
           </>
         );
-      case 'advanced':
-        return (
-          <>
-            <Box paddingBlockEnd="400">
-              <Button onClick={handleBackClick} variant="plain">← Back to Settings</Button>
-            </Box>
-            <Suspense fallback={<Box padding="400"><Spinner size="large" /></Box>}>
-              <AdvancedSettingsForm />
-            </Suspense>
-          </>
-        );
       case 'design':
         return (
           <>
@@ -56,6 +45,17 @@ const Settings: React.FC = () => {
             </Box>
             <Suspense fallback={<Box padding="400"><Spinner size="large" /></Box>}>
               <DesignSettingsForm />
+            </Suspense>
+          </>
+        );
+        case 'advanced':
+        return (
+          <>
+            <Box paddingBlockEnd="400">
+              <Button onClick={handleBackClick} variant="plain">← Back to Settings</Button>
+            </Box>
+            <Suspense fallback={<Box padding="400"><Spinner size="large" /></Box>}>
+              <AdvancedSettingsForm />
             </Suspense>
           </>
         );
@@ -75,6 +75,19 @@ const Settings: React.FC = () => {
               </Card>
             </div>
             
+              <div onClick={() => handleCardClick('design')} style={{ cursor: 'pointer' }}>
+              <Card padding="500">
+                <BlockStack gap="200">
+                  <Text as="h2" variant="headingMd">Design</Text>
+                  <TextContainer>
+                    <Text as="p" variant="bodyMd">
+                      Customize the appearance, themes, and visual elements.
+                    </Text>
+                  </TextContainer>
+                </BlockStack>
+              </Card>
+            </div>
+            
             <div onClick={() => handleCardClick('advanced')} style={{ cursor: 'pointer' }}>
               <Card padding="500">
                 <BlockStack gap="200">
@@ -82,19 +95,6 @@ const Settings: React.FC = () => {
                   <TextContainer>
                     <Text as="p" variant="bodyMd">
                       Configure advanced options, integrations, and system preferences.
-                    </Text>
-                  </TextContainer>
-                </BlockStack>
-              </Card>
-            </div>
-            
-            <div onClick={() => handleCardClick('design')} style={{ cursor: 'pointer' }}>
-              <Card padding="500">
-                <BlockStack gap="200">
-                  <Text as="h2" variant="headingMd">Design</Text>
-                  <TextContainer>
-                    <Text as="p" variant="bodyMd">
-                      Customize the appearance, themes, and visual elements.
                     </Text>
                   </TextContainer>
                 </BlockStack>
