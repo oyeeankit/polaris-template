@@ -12,7 +12,9 @@ import {
   SettingsIcon,
   PersonFilledIcon,
   AppsIcon,
-  CreditCardIcon 
+  CreditCardIcon,
+  InventoryIcon,
+  PageClockIcon
 } from '@shopify/polaris-icons';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import Dashboard from './components/Dashboard';
@@ -28,8 +30,10 @@ import FloHome from './components/flo/Home';
 import FloSettings from './components/flo/Settings';
 import FloAccounts from './components/flo/Accounts';
 import FloSupport from './components/flo/Support'; 
-
-
+import FloHistory from './components/flo/History';
+import FlowInventory from './components/flo/Inventory';
+import FlowInventoryDetailView from './components/flo/DetailView';
+import QuickView from './components/flo/QuickView';
 // Wrapper component to access location
 const AppContent: React.FC = () => {
   const [isNavigationOpen, setIsNavigationOpen] = useState<boolean>(true);
@@ -117,9 +121,13 @@ const AppContent: React.FC = () => {
               icon: HomeIcon,
             },
             {
-              label: 'Settings',
-              url: '/flo/settings',
-              icon: SettingsIcon,
+              label: 'History',
+              url: '/flo/history',
+              icon: PageClockIcon,
+            },{
+              label: 'Inventory',
+              url: '/flo/inventory',
+              icon: InventoryIcon,
             },
             {
               label: 'Accounts',
@@ -163,10 +171,12 @@ const AppContent: React.FC = () => {
             <Route path="/dual/plans" element={<DualPlans/>} />
             <Route path="/dual/support" element={<DualSupport />} />
             <Route path="/flo/home" element={<FloHome />} />
-            <Route path="/flo/settings" element={<FloSettings />} />
+            <Route path="/flo/history" element={<FloHistory />} />
+            <Route path="/flo/inventory" element={<FlowInventory />} />
             <Route path="/flo/accounts" element={<FloAccounts />} />
             <Route path="/flo/support" element={<FloSupport />} />
-           
+           <Route path="/flo/inventory-quick-view" element={<QuickView />} />
+           <Route path="/flo/inventory-detail-view" element={<FlowInventoryDetailView />} />
           </Routes>
     </Frame>
   );
