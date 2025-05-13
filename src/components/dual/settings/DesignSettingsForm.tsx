@@ -404,7 +404,7 @@ const DesignSettingsForm: React.FC = () => {
         </FormLayout>
 
         <Box paddingBlockStart="400">
-          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Button variant="primary" onClick={handleSave}>Save</Button>
           </div>
         </Box>

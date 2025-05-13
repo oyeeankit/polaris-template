@@ -229,7 +229,9 @@ const TaxSettingsForm: React.FC = () => {
         </Box>
 
         <Box paddingBlockStart="400" paddingInlineStart="400" paddingInlineEnd="400" paddingBlockEnd="400">
-          <Button variant="primary" onClick={handleSave}>Save</Button>
+            <InlineStack align="end">
+              <Button variant="primary" onClick={handleSave}>Save</Button>
+            </InlineStack>
         </Box>
       </BlockStack>
     </Card>
