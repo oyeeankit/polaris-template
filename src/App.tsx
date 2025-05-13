@@ -11,7 +11,8 @@ import {
   ChartLineIcon,
   SettingsIcon,
   PersonFilledIcon,
-  AppsIcon
+  AppsIcon,
+  CreditCardIcon 
 } from '@shopify/polaris-icons';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import Dashboard from './components/Dashboard';
@@ -21,11 +22,12 @@ import Settings from './components/Settings';
 import DualHome from './components/dual/Home';
 import DualSettings from './components/dual/Settings';
 import DualAccounts from './components/dual/Accounts';
+import DualPlans from './components/dual/Plans';
 import DualSupport from './components/dual/Support';
 import FloHome from './components/flo/Home';
 import FloSettings from './components/flo/Settings';
 import FloAccounts from './components/flo/Accounts';
-import FloSupport from './components/flo/Support';
+import FloSupport from './components/flo/Support'; 
 
 
 // Wrapper component to access location
@@ -93,6 +95,11 @@ const AppContent: React.FC = () => {
               icon: PersonFilledIcon,
             },
             {
+              label: 'Plans',
+              url: '/dual/plans',
+              icon: CreditCardIcon,
+            },
+            {
               label: 'Support',
               url: '/dual/support',
               icon: ChartLineIcon,
@@ -153,11 +160,13 @@ const AppContent: React.FC = () => {
             <Route path="/dual/home" element={<DualHome />} />
             <Route path="/dual/settings" element={<DualSettings />} />
             <Route path="/dual/accounts" element={<DualAccounts />} />
+            <Route path="/dual/plans" element={<DualPlans/>} />
             <Route path="/dual/support" element={<DualSupport />} />
             <Route path="/flo/home" element={<FloHome />} />
             <Route path="/flo/settings" element={<FloSettings />} />
             <Route path="/flo/accounts" element={<FloAccounts />} />
             <Route path="/flo/support" element={<FloSupport />} />
+           
           </Routes>
     </Frame>
   );
