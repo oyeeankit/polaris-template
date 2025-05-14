@@ -1,50 +1,79 @@
-import { Card, BlockStack, Box, Text, Page, Button } from '@shopify/polaris';
+import {
+  Card,
+  BlockStack,
+  Box,
+  Text,
+  Page
+} from '@shopify/polaris';
 import { useNavigate } from 'react-router-dom';
 
 export default function FlowInventory() {
   const navigate = useNavigate();
 
+  const ClickableCard = ({
+    title,
+    description,
+    onClick
+  }: {
+    title: string;
+    description: string;
+    onClick: () => void;
+  }) => (
+    <div
+      onClick={onClick}
+      style={{
+        cursor: 'pointer',
+        flex: '1 1 300px',
+        minWidth: '280px',
+        maxWidth: '100%',
+      }}
+    >
+      <Card>
+        <Box padding="400">
+          <BlockStack gap="200">
+            <Text as="h3" variant="bodyMd" fontWeight="semibold">
+              {title}
+            </Text>
+            <Text as="p" variant="bodySm" tone="subdued">
+              {description}
+            </Text>
+          </BlockStack>
+        </Box>
+      </Card>
+    </div>
+  );
+
   return (
     <Page>
-      <BlockStack gap="400">
-        {/* Quick View Card */}
-        <Card>
-          <BlockStack gap="0">
-            <Box background="bg-fill-secondary" padding="400" borderRadius="200">
-              <Text as="span" variant="bodyMd" fontWeight="medium">
-                Quick View
-              </Text>
-            </Box>
-            <Box padding="400">
-              <BlockStack gap="400">
-                <Text as="span" variant="bodyMd" tone="subdued">
-                  Get a quick overview of your inventory status
-                </Text>
-                <Button variant="primary" onClick={() => navigate('/flo/inventory-quick-view')}>View Quick Summary</Button>
-              </BlockStack>
-            </Box>
-          </BlockStack>
-        </Card>
+      {/* Heading */}
+      <Box padding="400">
+        <Text as="h1" variant="headingLg" fontWeight="bold">
+          Inventory Overview
+        </Text>
+      </Box>
 
-        {/* Detail View Card */}
-        <Card>
-          <BlockStack gap="0">
-            <Box background="bg-fill-secondary" padding="400" borderRadius="200">
-              <Text as="span" variant="bodyMd" fontWeight="medium">
-                Detail View
-              </Text>
-            </Box>
-            <Box padding="400">
-              <BlockStack gap="400">
-                <Text as="span" variant="bodyMd" tone="subdued">
-                  Access detailed inventory information and analytics
-                </Text>
-                <Button variant="primary" onClick={() => navigate('/flo/inventory-detail-view')}>View Details</Button>
-              </BlockStack>
-            </Box>
-          </BlockStack>
-        </Card>
-      </BlockStack>
+      {/* Card Row */}
+      <Box paddingInline="400">
+        <div
+          style={{
+            display: 'flex',
+            gap: '16px',
+            flexWrap: 'wrap',
+            justifyContent: 'flex-start'
+          }}
+        >
+          <ClickableCard
+            title="Quick View"
+            description="Get a quick overview of your inventory status."
+            onClick={() => navigate('/flo/inventory-quick-view')}
+          />
+          <ClickableCard
+            title="Detail View"
+            description="Access detailed inventory information and analytics."
+            onClick={() => navigate('/flo/inventory-detail-view')}
+          />
+        </div>
+      </Box>
     </Page>
   );
-} 
+}

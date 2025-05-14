@@ -12,8 +12,8 @@ import {
   Box,
   Popover,
   ActionList,
-  TextContainer,
-  Icon
+  Toast,
+  Spinner
 } from '@shopify/polaris';
 import { DeleteIcon } from '@shopify/polaris-icons';
 
@@ -31,6 +31,9 @@ const Home: React.FC = () => {
   const locationOptions = ['Warehouse A', 'Warehouse B', 'Storefront'];
 
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  const [toastActive, setToastActive] = useState(false);
+
+  // Removed the loading state as we no longer need it
 
   const handleSelectLocation = (location: string) => {
     if (!selectedLocations.includes(location)) {
@@ -48,8 +51,15 @@ const Home: React.FC = () => {
     onAction: () => handleSelectLocation(loc),
   }));
 
+  const handleSkuSyncChange = (value: string) => {
+    setSkuSync(value);
+    setToastActive(true); // Trigger the toast
+  };
+
   return (
     <Page>
+      {/* Removed loader (spinner) */}
+      
       <BlockStack gap="400">
         {/* App Title */}
         <Box paddingBlockEnd="200">
@@ -62,7 +72,7 @@ const Home: React.FC = () => {
         <Banner tone="info">
           <InlineStack align="space-between" blockAlign="center">
             <Text as="span" variant="bodyMd">
-              The app helps to keep the duplicate SKUs in sync
+              The app helps to keep the matching SKUs in sync.
             </Text>
             <Button url="#" variant="primary" size="slim">
               Getting Started Guide
@@ -74,13 +84,13 @@ const Home: React.FC = () => {
         <Card>
           <InlineStack align="space-between" blockAlign="center" wrap={false}>
             <Text as="span" variant="bodyMd" fontWeight="medium">
-              Duplicate SKU Sync
+               SKU Sync
             </Text>
             <Box minWidth="200px" maxWidth="300px">
               <Select
                 options={skuSyncOptions}
                 value={skuSync}
-                onChange={setSkuSync}
+                onChange={handleSkuSyncChange}
                 label="Duplicate SKU Sync"
                 labelHidden
               />
@@ -115,16 +125,15 @@ const Home: React.FC = () => {
             </InlineStack>
 
             <BlockStack gap="050">
-  <Text as="p" variant="bodySm" tone="subdued">
-    Inventory at these locations will not be synced.
-  </Text>
-  <Text as="p" variant="bodySm">
-    <Link url="#" removeUnderline>
-      More info
-    </Link>
-  </Text>
-</BlockStack>
-
+              <Text as="p" variant="bodySm" tone="subdued">
+                Inventory at these locations will not be synced.
+              </Text>
+              <Text as="p" variant="bodySm">
+                <Link url="#" removeUnderline>
+                  More info
+                </Link>
+              </Text>
+            </BlockStack>
 
             {/* Table to show selected locations */}
             {selectedLocations.length > 0 && (
@@ -132,10 +141,14 @@ const Home: React.FC = () => {
                 {/* Table Header */}
                 <InlineStack align="space-between" blockAlign="center">
                   <Box width="70%">
-                    <Text as="span" variant="bodySm" fontWeight="bold">Location</Text>
+                    <Text as="span" variant="bodySm" fontWeight="bold">
+                      Location
+                    </Text>
                   </Box>
                   <Box width="30%">
-                    <Text as="span" variant="bodySm" fontWeight="bold">Action</Text>
+                    <Text as="span" variant="bodySm" fontWeight="bold">
+                      Action
+                    </Text>
                   </Box>
                 </InlineStack>
 
@@ -150,7 +163,9 @@ const Home: React.FC = () => {
                     wrap={false}
                   >
                     <Box width="70%">
-                      <Text as="span" variant="bodySm">{loc}</Text>
+                      <Text as="span" variant="bodySm">
+                        {loc}
+                      </Text>
                     </Box>
                     <Box width="30%">
                       <Button
@@ -165,11 +180,14 @@ const Home: React.FC = () => {
                 ))}
               </BlockStack>
             )}
-
-
           </BlockStack>
         </Card>
       </BlockStack>
+
+      {/* Toast Message */}
+      {toastActive && (
+        <Toast content="Sync setting saved successfully" onDismiss={() => setToastActive(false)} />
+      )}
     </Page>
   );
 };
