@@ -1,8 +1,10 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { useState } from 'react';
 import {
   Page,
   Card,
   InlineStack,
+  BlockStack,
   FormLayout,
   Select,
   TextField,
@@ -10,10 +12,12 @@ import {
   Link,
   Box,
   Divider,
-  BlockStack,
   Text,
   DataTable,
   Toast,
+  Badge,
+  Tooltip,
+  Thumbnail,
 } from '@shopify/polaris';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,52 +29,17 @@ interface SearchResultItem {
   inventory: number;
 }
 
-function ShopifyInfoTable({
-  shopifyId,
-  variantId,
-  sku,
-  title,
-}: {
-  shopifyId: string;
-  variantId: string;
-  sku: string;
-  title: string;
-}) {
-  return (
-    <Card>
-      <Box padding="300">
-        <Text variant="headingSm" as="h2">
-          {title}
-        </Text>
-      </Box>
-      <Box overflowX="scroll" paddingInline="400" paddingBlockEnd="400">
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <tbody>
-            {[
-              { label: 'Shopify ID', value: shopifyId },
-              { label: 'Variant ID', value: variantId },
-              { label: 'SKU', value: sku },
-            ].map(({ label, value }) => (
-              <tr key={label} style={{ borderBottom: '1px solid #dfe3e8' }}>
-                <td style={{ padding: '8px', width: '120px', fontWeight: 'bold' }}>{label}</td>
-                <td style={{ padding: '8px' }}>{value}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Box>
-    </Card>
-  );
-}
-
 export default function QuickView() {
   const navigate = useNavigate();
   const [location, setLocation] = useState<string>('warehouse1');
   const [sku, setSku] = useState<string>('');
   const [restockQty, setRestockQty] = useState<string>('');
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
-  const [isBackLinkHovered, setIsBackLinkHovered] = useState<boolean>(false);
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
+  
+  // Add these new states for advanced search
+  const [skuCondition, setSkuCondition] = useState<string>('equal');
+  const [advancedSku, setAdvancedSku] = useState<string>('');
 
   // Toast state
   const [toastActive, setToastActive] = useState(false);
@@ -85,30 +54,97 @@ export default function QuickView() {
   ];
 
   const handleSearch = () => {
-    if (sku.length < 3) {
-      setSearchResults([]);
-      setToastContent('Please provide SKU with minimum 3 characters');
-      setToastError(true);
-      setToastActive(true);
-      return;
-    }
+    if (!showAdvanced) {
+      // Regular search
+      if (sku.length < 3) {
+        setSearchResults([]);
+        setToastContent('Please provide SKU with minimum 3 characters');
+        setToastError(true);
+        setToastActive(true);
+        return;
+      }
 
-    if (location === 'warehouse1' && sku.toUpperCase() === 'ABC') {
-      setSearchResults([
+      if (location === 'warehouse1' && sku.toUpperCase() === 'ABC') {
+        setSearchResults([
+          {
+            shopifyId: '8011199873175',
+            variantId: '43120834510999',
+            sku: 'ABC',
+            title: 'MX ANYWHERE 3 無線高階靜音滑鼠 - 石墨灰',
+            inventory: 0,
+          },
+        ]);
+      } else {
+        setSearchResults([]);
+        setToastContent('No results found');
+        setToastError(true);
+        setToastActive(true);
+      }
+    } else {
+      // Advanced search
+      if (advancedSku.length < 3) {
+        setSearchResults([]);
+        setToastContent('Please provide SKU with minimum 3 characters');
+        setToastError(true);
+        setToastActive(true);
+        return;
+      }
+
+      // Mock data for testing different conditions
+      const mockProducts = [
         {
           shopifyId: '8011199873175',
           variantId: '43120834510999',
-          sku: 'ABC',
+          sku: 'ABC123',
           title: 'MX ANYWHERE 3 無線高階靜音滑鼠 - 石墨灰',
-          inventory: 0,
+          inventory: 5,
         },
-      ]);
-    } else {
-      setSearchResults([]);
-      setToastContent('No results found');
-      setToastError(true);
-      setToastActive(true);
+        {
+          shopifyId: '8011199873176',
+          variantId: '43120834511000',
+          sku: 'ABC456',
+          title: 'MX MASTER 3 無線高階滑鼠 - 黑色',
+          inventory: 10,
+        },
+        {
+          shopifyId: '8011199873177',
+          variantId: '43120834511001',
+          sku: 'XYZ123',
+          title: 'K380 多工藍牙鍵盤 - 白色',
+          inventory: 15,
+        }
+      ];
+
+      // Filter based on condition
+      let filteredResults: SearchResultItem[] = [];
+      
+      if (skuCondition === 'equal') {
+        filteredResults = mockProducts.filter(
+          product => product.sku.toUpperCase() === advancedSku.toUpperCase()
+        );
+      } else if (skuCondition === 'contains') {
+        filteredResults = mockProducts.filter(
+          product => product.sku.toUpperCase().includes(advancedSku.toUpperCase())
+        );
+      } else if (skuCondition === 'starts') {
+        filteredResults = mockProducts.filter(
+          product => product.sku.toUpperCase().startsWith(advancedSku.toUpperCase())
+        );
+      }
+
+      if (filteredResults.length > 0) {
+        setSearchResults(filteredResults);
+      } else {
+        setSearchResults([]);
+        setToastContent('No results found');
+        setToastError(true);
+        setToastActive(true);
+      }
     }
+  };
+
+  const handleAdvancedSearch = () => {
+    handleSearch();
   };
 
   const handleUpdateInventory = () => {
@@ -136,31 +172,56 @@ export default function QuickView() {
     setRestockQty('');
   };
 
-  return (
-    <Page fullWidth>
-      <Box padding="400">
-        <Text variant="headingLg" as="h1">
-          Quick View and Restock Inventory
+  const renderInventoryStatus = (inventory: number) => {
+    if (inventory <= 0) {
+      return <Badge tone="critical">Out of stock</Badge>;
+    } else if (inventory < 5) {
+      return <Badge tone="warning">{`Low stock: ${inventory.toString()}`}</Badge>;
+    } else {
+      return <Badge tone="success">{`In stock: ${inventory.toString()}`}</Badge>;
+    }
+  };
+
+  // Create a formatted row for each search result
+  const rows = searchResults.map((item, index) => [
+    String(index + 1), // Convert to string to avoid type errors
+    <InlineStack gap="300" align="start" blockAlign="center" key={`product-${item.variantId}`}>
+      <Box width="40px">
+        <Thumbnail
+          source="https://cdn.shopify.com/s/files/1/0757/9955/files/placeholder-image.svg"
+          alt={item.title}
+          size="small"
+        />
+      </Box>
+      <BlockStack gap="100">
+        <Text as="span" variant="bodyMd" fontWeight="bold" truncate>
+          {item.title}
         </Text>
-      </Box>
+        <Text as="span" variant="bodySm" tone="subdued">
+          SKU: {item.sku}
+        </Text>
+      </BlockStack>
+    </InlineStack>,
+    renderInventoryStatus(item.inventory),
+    <InlineStack gap="200" key={`actions-${item.variantId}`}>
+      <Button size="slim" onClick={() => {}}>View</Button>
+      <Button size="slim" variant="primary" onClick={() => {
+        // Pre-fill the restock field with a suggested value (e.g. enough to reach 10 items)
+        const suggestedRestock = Math.max(0, 10 - item.inventory);
+        setRestockQty(suggestedRestock.toString());
+      }}>Restock</Button>
+    </InlineStack>
+  ]);
 
-      <Box paddingInlineStart="400" paddingBlockEnd="400">
-        <span
-          onClick={() => navigate('/flo/inventory')}
-          onMouseEnter={() => setIsBackLinkHovered(true)}
-          onMouseLeave={() => setIsBackLinkHovered(false)}
-          style={{
-            display: 'inline-block',
-            cursor: 'pointer',
-            color: '#0066C0',
-            textDecoration: isBackLinkHovered ? 'underline' : 'none',
-            fontWeight: 600,
-          }}
-        >
-          ← Back to Inventory
-        </span>
-      </Box>
-
+  return (
+    <Page 
+      fullWidth
+      title="Quick View and Restock Inventory"
+      backAction={{
+        content: 'Inventory',
+        onAction: () => navigate('/flo/inventory')
+      }}
+    >
       <BlockStack gap="400">
         <Card>
           <Box padding="400">
@@ -217,8 +278,8 @@ export default function QuickView() {
                           { label: 'Contains', value: 'contains' },
                           { label: 'Starts with', value: 'starts' },
                         ]}
-                        value="equal"
-                        onChange={() => { }}
+                        value={skuCondition}
+                        onChange={(value: string) => setSkuCondition(value)}
                       />
                     </Box>
 
@@ -228,10 +289,12 @@ export default function QuickView() {
                         labelHidden
                         placeholder="Enter SKU"
                         autoComplete="off"
+                        value={advancedSku}
+                        onChange={(value: string) => setAdvancedSku(value)}
                       />
                     </Box>
 
-                    <Button variant="primary">Search</Button>
+                    <Button variant="primary" onClick={handleAdvancedSearch}>Search</Button>
                   </InlineStack>
                 </Box>
               )}
@@ -240,85 +303,38 @@ export default function QuickView() {
                 <>
                   <Divider />
                   <Box paddingBlockStart="400">
-                    <InlineStack gap="400" wrap blockAlign="center">
+                    <InlineStack gap="400" blockAlign="center">
                       <Box width="200px">
                         <TextField
                           label="Restock Quantity"
-                          labelHidden
                           value={restockQty}
-                          onChange={(value: string) => setRestockQty(value)}
-                          placeholder="Enter Restock Quantity"
+                          onChange={(value) => setRestockQty(value)}
+                          placeholder="Enter quantity"
                           autoComplete="off"
                           type="number"
                           min={0}
                         />
                       </Box>
-                      <Button variant="primary" onClick={handleUpdateInventory}>
-                        Update
-                      </Button>
+                      <Box paddingBlockStart="500">
+                        <Button variant="primary" onClick={handleUpdateInventory}>
+                          Update Inventory
+                        </Button>
+                      </Box>
                     </InlineStack>
                   </Box>
-                  <DataTable
-                    columnContentTypes={['numeric', 'text', 'numeric', 'text']}
-                    headings={['#', 'Item', 'Inventory', 'Action']}
-                    rows={searchResults.map((item, index) => [
-                      index + 1,
-                      <Box key={`item-${item.variantId}`}>
-                        <a
-                          href="#"
-                          style={{
-                            color: '#108043',
-                            fontWeight: 600,
-                            textDecoration: 'none',
-                            wordBreak: 'break-word',
-                          }}
-                        >
-
-                        </a>
-                        <ShopifyInfoTable
-                          shopifyId={item.shopifyId}
-                          variantId={item.variantId}
-                          sku={item.sku}
-                          title={item.title}
-                        />
-                      </Box>,
-                      item.inventory,
-                      <InlineStack
-                        gap="400"
-                        align="center"
-                        blockAlign="center"
-                        key={`actions-${item.variantId}`}
-                      >
-                        <Button
-                          size="slim"
-                          variant="plain"
-                          onClick={() =>
-                            window.open(
-                              `https://admin.shopify.com/store/YOUR_STORE_NAME/products/${item.shopifyId}`,
-                              '_blank',
-                            )
-                          }
-                        >
-                          View
-                        </Button>
-                        <Button
-                          size="slim"
-                          variant="plain"
-                          onClick={() =>
-                            window.open(
-                              `https://admin.shopify.com/store/YOUR_STORE_NAME/products/${item.shopifyId}/edit`,
-                              '_blank',
-                            )
-                          }
-                        >
-                          Edit
-                        </Button>
-                      </InlineStack>,
-                    ])}
-                    verticalAlign="middle"
-                    footerContent={`Total items: ${searchResults.length}`}
-                    sortable={[false, false, false, false]}
-                  />
+                  
+                  <Box paddingBlockStart="400">
+                    <Card padding="0">
+                      <DataTable
+                        columnContentTypes={['numeric', 'text', 'text', 'text']}
+                        headings={['#', 'Product', 'Inventory', 'Actions']}
+                        rows={rows}
+                        footerContent={`${searchResults.length} items found`}
+                        increasedTableDensity
+                        showTotalsInFooter={false}
+                      />
+                    </Card>
+                  </Box>
                 </>
               )}
             </FormLayout>

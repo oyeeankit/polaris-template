@@ -4,6 +4,7 @@ import {
   Text,
   Box,
   BlockStack,
+  InlineStack, // Add this import
   Link,
   IndexTable,
   Filters,
@@ -37,7 +38,101 @@ export default function FloHistory() {
         quantity: 5,
       },
     },
-    // Add more items as needed for testing pagination
+    {
+      sku: 'CAM123_NERO',
+      orderId: '11846775308671',
+      orderDate: '15 May 2025 03:25 PM',
+      productTitle: 'Sneakers Classic - NERO / 42',
+      productVariantId: '49871255077157',
+      productAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871255077157',
+      syncedItems: [
+        {
+          title: 'Sneakers Classic - NERO / 42',
+          variantId: '49871244984613',
+          variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984613',
+        },
+      ],
+      finalStock: {
+        location: 'Warehouse 2',
+        quantity: -2,
+      },
+    },
+    {
+      sku: 'TEST_SKU_1',
+      orderId: '11846775308672',
+      orderDate: '16 May 2025 04:35 PM',
+      productTitle: 'Test Product 1',
+      productVariantId: '49871255077158',
+      productAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871255077158',
+      syncedItems: [
+        {
+          title: 'Test Product 1 - Variant A',
+          variantId: '49871244984614',
+          variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984614',
+        },
+      ],
+      finalStock: {
+        location: 'Warehouse 3',
+        quantity: 10,
+      },
+    },
+    {
+      sku: 'TEST_SKU_2',
+      orderId: '11846775308673',
+      orderDate: '17 May 2025 05:45 PM',
+      productTitle: 'Test Product 2',
+      productVariantId: '49871255077159',
+      productAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871255077159',
+      syncedItems: [
+        {
+          title: 'Test Product 2 - Variant B',
+          variantId: '49871244984615',
+          variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984615',
+        },
+      ],
+      finalStock: {
+        location: 'Warehouse 4',
+        quantity: 0,
+      },
+    },
+    {
+      sku: 'TEST_SKU_3',
+      orderId: '11846775308674',
+      orderDate: '18 May 2025 06:55 PM',
+      productTitle: 'Test Product 3',
+      productVariantId: '49871255077160',
+      productAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871255077160',
+      syncedItems: [
+        {
+          title: 'Test Product 3 - Variant C',
+          variantId: '49871244984616',
+          variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984616',
+        },
+      ],
+      finalStock: {
+        location: 'Warehouse 5',
+        quantity: 3,
+      },
+    },
+    {
+      sku: 'TEST_SKU_4',
+      orderId: '11846775308675',
+      orderDate: '19 May 2025 08:05 PM',
+      productTitle: 'Test Product 4',
+      productVariantId: '49871255077161',
+      productAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871255077161',
+      syncedItems: [
+        {
+          title: 'Test Product 4 - Variant D',
+          variantId: '49871244984617',
+          variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984617',
+        },
+      ],
+      finalStock: {
+        location: 'Warehouse 6',
+        quantity: 7,
+      },
+    },
   ]);
 
   const handleQueryChange = useCallback((value: string) => {
@@ -124,64 +219,57 @@ export default function FloHistory() {
                             </IndexTable.Cell>
 
                             <IndexTable.Cell>
-                              <Box maxWidth="450px">
-                                <BlockStack gap="200">
-                                  {/* Order & Product Info */}
-                                  <Card padding="300">
-                                    <BlockStack gap="100">
-                                      <Text as='span' variant="bodySm">
-                                        <Text as="span" fontWeight="medium">Order#</Text> {item.orderId} - {item.orderDate}
-                                      </Text>
-                                      <Text as='span' variant="bodySm">
-                                        <Link url={item.productAdminLink} external>
-                                          {item.productTitle}
-                                        </Link>
-                                      </Text>
-                                      <Text as='span' tone="subdued" variant="bodySm">
-                                        Variant ID -{' '}
-                                        <Link
-                                          url={`https://admin.shopify.com/store/your-store-name/products/${item.productVariantId}`}
-                                          external
-                                        >
-                                          {item.productVariantId}
-                                        </Link>
-                                      </Text>
-                                    </BlockStack>
-                                  </Card>
-
-                                  {/* Synced Items Info */}
-                                  <Card padding="300">
-                                    <IndexTable
-                                      resourceName={{ singular: 'item', plural: 'items' }}
-                                      itemCount={item.syncedItems.length}
-                                      headings={[
-                                        { title: '#' },
-                                        { title: 'Item' },
-                                        { title: 'ID' },
-                                      ]}
-                                      selectable={false}
-                                      condensed
+                              <Box paddingInlineStart="200" paddingInlineEnd="200">
+                                <BlockStack gap="300">
+                                  {/* Order Info */}
+                                  <Text as="span" variant="bodySm">
+                                    <Text as="span" fontWeight="medium">Order:</Text> #{item.orderId} 
+                                    <Text as="span" tone="subdued"> • {item.orderDate}</Text>
+                                  </Text>
+                                  
+                                  {/* Product Info */}
+                                  <Text as="span" variant="bodySm">
+                                    <Text as="span" fontWeight="medium">Product:</Text>{' '}
+                                    <Link url={item.productAdminLink} external monochrome>
+                                      {item.productTitle}
+                                    </Link>
+                                  </Text>
+                                  
+                                  {/* Variant ID */}
+                                  <Text as="span" variant="bodySm">
+                                    <Text as="span" fontWeight="medium">Variant ID:</Text>{' '}
+                                    <Link 
+                                      url={`https://admin.shopify.com/store/your-store-name/products/${item.productVariantId}`}
+                                      external
+                                      monochrome
                                     >
-                                      {item.syncedItems.map((syncedItem, idx) => (
-                                        <IndexTable.Row id={String(idx)} key={idx} position={idx}>
-                                          <IndexTable.Cell>{idx + 1}</IndexTable.Cell>
-                                          <IndexTable.Cell>
-                                            <Link url={syncedItem.variantAdminLink} external>
-                                              {syncedItem.title}
-                                            </Link>
-                                          </IndexTable.Cell>
-                                          <IndexTable.Cell>
-                                            <Link
-                                              url={`https://admin.shopify.com/store/your-store-name/products/${syncedItem.variantId}`}
-                                              external
-                                            >
-                                              {syncedItem.variantId}
-                                            </Link>
-                                          </IndexTable.Cell>
-                                        </IndexTable.Row>
-                                      ))}
-                                    </IndexTable>
-                                  </Card>
+                                      {item.productVariantId}
+                                    </Link>
+                                  </Text>
+                                  
+                                  {/* Synced Items */}
+                                  <BlockStack gap="100">
+                                    <Text as="span" variant="bodySm" fontWeight="medium">Synced with:</Text>
+                                    {item.syncedItems.map((syncedItem, idx) => (
+                                      <Box key={idx} paddingBlockStart="100" paddingBlockEnd="100" paddingInlineStart="200">
+                                        <InlineStack gap="200" align="start">
+                                          <Text as="span" variant="bodySm">
+                                            {idx + 1}.
+                                          </Text>
+                                          <BlockStack gap="100">
+                                            <Text as="span" variant="bodySm">
+                                              <Link url={syncedItem.variantAdminLink} external monochrome>
+                                                {syncedItem.title}
+                                              </Link>
+                                            </Text>
+                                            <Text as="span" variant="bodySm" tone="subdued">
+                                              ID: {syncedItem.variantId}
+                                            </Text>
+                                          </BlockStack>
+                                        </InlineStack>
+                                      </Box>
+                                    ))}
+                                  </BlockStack>
                                 </BlockStack>
                               </Box>
                             </IndexTable.Cell>
@@ -216,18 +304,17 @@ export default function FloHistory() {
 
                       {/* Pagination */}
                       {totalPages > 1 && (
-                        <Box paddingBlockStart="400">
-                          <div style={{ display: 'flex', justifyContent: 'center' }}>
-                            <Pagination
-                              hasPrevious={currentPage > 1}
-                              onPrevious={() => setCurrentPage(prev => prev - 1)}
-                              hasNext={currentPage < totalPages}
-                              onNext={() => setCurrentPage(prev => prev + 1)}
-                            />
-                          </div>
+                        <Box paddingBlockStart="400" paddingBlockEnd="200">
+                          <Pagination
+                            hasPrevious={currentPage > 1}
+                            onPrevious={() => setCurrentPage(prev => prev - 1)}
+                            hasNext={currentPage < totalPages}
+                            onNext={() => setCurrentPage(prev => prev + 1)}
+                            type="table"
+                            label={`Page ${currentPage} of ${totalPages}`}
+                            accessibilityLabel={`Pagination navigation, current page ${currentPage} of ${totalPages}`}
+                          />
                         </Box>
-
-
                       )}
                     </>
                   )}

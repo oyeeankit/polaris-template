@@ -32,8 +32,7 @@ const Home: React.FC = () => {
 
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [toastActive, setToastActive] = useState(false);
-
-  // Removed the loading state as we no longer need it
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSelectLocation = (location: string) => {
     if (!selectedLocations.includes(location)) {
@@ -51,15 +50,20 @@ const Home: React.FC = () => {
     onAction: () => handleSelectLocation(loc),
   }));
 
-  const handleSkuSyncChange = (value: string) => {
-    setSkuSync(value);
-    setToastActive(true); // Trigger the toast
+  const handleSkuSyncChange = async (value: string) => {
+    setIsLoading(true);
+    try {
+      setSkuSync(value);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setToastActive(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <Page>
-      {/* Removed loader (spinner) */}
-      
       <BlockStack gap="400">
         {/* App Title */}
         <Box paddingBlockEnd="200">
@@ -99,7 +103,7 @@ const Home: React.FC = () => {
         </Card>
 
         {/* Blacklisted Locations */}
-        <Card>
+        <Card padding="400">
           <BlockStack gap="400">
             <InlineStack align="space-between" blockAlign="center">
               <Box>
@@ -114,6 +118,7 @@ const Home: React.FC = () => {
                     variant="secondary"
                     onClick={togglePopoverActive}
                     disclosure
+                    aria-label="Select a location to blacklist"
                   >
                     Add Location
                   </Button>
@@ -179,6 +184,14 @@ const Home: React.FC = () => {
                   </InlineStack>
                 ))}
               </BlockStack>
+            )}
+
+            {selectedLocations.length === 0 && (
+              <Box padding="400">
+                <Text as="p" variant="bodyMd" tone="subdued" alignment="center">
+                  No locations blacklisted.
+                </Text>
+              </Box>
             )}
           </BlockStack>
         </Card>
