@@ -93,7 +93,7 @@ const Home: React.FC = () => {
         <Banner tone="info">
           <InlineStack align="space-between" blockAlign="center">
             <Text as="span" variant="bodyMd">
-              The app helps to keep the matching SKUs in sync.
+              The app helps to keep the Duplicate SKUs in sync.
             </Text>
             <Button url="#" variant="primary" size="slim">
               Getting Started Guide
