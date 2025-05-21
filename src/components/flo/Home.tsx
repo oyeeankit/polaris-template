@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Page,
   Card,
@@ -33,6 +33,23 @@ const Home: React.FC = () => {
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [toastActive, setToastActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Add effect to auto-dismiss toast after 3 seconds
+  useEffect(() => {
+    let toastTimer: NodeJS.Timeout;
+    
+    if (toastActive) {
+      toastTimer = setTimeout(() => {
+        setToastActive(false);
+      }, 3000); // 3 seconds (changed from 1000)
+    }
+    
+    // Cleanup function to clear the timer if component unmounts
+    // or if toast is dismissed manually before timeout
+    return () => {
+      if (toastTimer) clearTimeout(toastTimer);
+    };
+  }, [toastActive]);
 
   const handleSelectLocation = (location: string) => {
     if (!selectedLocations.includes(location)) {

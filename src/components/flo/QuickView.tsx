@@ -16,8 +16,9 @@ import {
   DataTable,
   Toast,
   Badge,
-  Tooltip,
   Thumbnail,
+  Image,
+  ButtonGroup, // Add this import
 } from '@shopify/polaris';
 import { useNavigate } from 'react-router-dom';
 
@@ -173,25 +174,25 @@ export default function QuickView() {
   };
 
   const renderInventoryStatus = (inventory: number) => {
-    if (inventory <= 0) {
-      return <Badge tone="critical">Out of stock</Badge>;
-    } else if (inventory < 5) {
-      return <Badge tone="warning">{`Low stock: ${inventory.toString()}`}</Badge>;
-    } else {
-      return <Badge tone="success">{`In stock: ${inventory.toString()}`}</Badge>;
-    }
+    return <Text as="span" variant="bodyMd">{inventory}</Text>;
   };
 
   // Create a formatted row for each search result
   const rows = searchResults.map((item, index) => [
-    String(index + 1), // Convert to string to avoid type errors
+    String(index + 1),
     <InlineStack gap="300" align="start" blockAlign="center" key={`product-${item.variantId}`}>
       <Box width="40px">
-        <Thumbnail
-          source="https://cdn.shopify.com/s/files/1/0757/9955/files/placeholder-image.svg"
-          alt={item.title}
-          size="small"
-        />
+        {/* Polaris placeholder approach for missing images */}
+        <div className="Polaris-Thumbnail__IconWrapper">
+          <span className="Polaris-Text--root Polaris-Text--visuallyHidden Polaris-Text--breadcrumbsExperimental">
+            {item.title}
+          </span>
+          <span className="Polaris-Icon">
+            <svg viewBox="0 0 20 20" className="Polaris-Icon__Svg" focusable="false" aria-hidden="true">
+              <path d="M19 2.5A1.5 1.5 0 0 0 17.5 1h-15A1.5 1.5 0 0 0 1 2.5v15A1.5 1.5 0 0 0 2.5 19h15a1.5 1.5 0 0 0 1.5-1.5v-15zm-1 4.25h-2.523v-3.25h2.523v3.25zm-8.477-3.25h5.477v3.25h-5.477v-3.25zm-6 0h5v3.25h-5v-3.25zm0 4.25h14v9.25h-14v-9.25z" />
+            </svg>
+          </span>
+        </div>
       </Box>
       <BlockStack gap="100">
         <Text as="span" variant="bodyMd" fontWeight="bold" truncate>
@@ -203,19 +204,37 @@ export default function QuickView() {
       </BlockStack>
     </InlineStack>,
     renderInventoryStatus(item.inventory),
-    <InlineStack gap="200" key={`actions-${item.variantId}`}>
-      <Button size="slim" onClick={() => {}}>View</Button>
-      <Button size="slim" variant="primary" onClick={() => {
-        // Pre-fill the restock field with a suggested value (e.g. enough to reach 10 items)
-        const suggestedRestock = Math.max(0, 10 - item.inventory);
-        setRestockQty(suggestedRestock.toString());
-      }}>Restock</Button>
-    </InlineStack>
+    <Box key={`actions-${item.variantId}`}>
+      <ButtonGroup>
+        <Button 
+          size="slim" 
+          onClick={() => {
+            // Open product on Shopify storefront in a new tab
+            window.open(`https://admin.shopify.com/store/YOUR_STORE_NAME/products/${item.shopifyId}`, '_blank');
+          }}
+        >
+          View
+        </Button>
+        <Button 
+          size="slim" 
+          onClick={() => {
+            // Open product in Shopify admin in a new tab
+            window.open(`https://admin.shopify.com/store/YOUR_STORE_NAME/products/${item.shopifyId}`, '_blank');
+            
+            // Pre-fill the restock field with a suggested value
+            const suggestedRestock = Math.max(0, 10 - item.inventory);
+            setRestockQty(suggestedRestock.toString());
+          }}
+        >
+          Edit
+        </Button>
+      </ButtonGroup>
+    </Box>
   ]);
 
   return (
     <Page 
-      fullWidth
+      // Remove the fullWidth prop to match other pages
       title="Quick View and Restock Inventory"
       backAction={{
         content: 'Inventory',
@@ -234,6 +253,7 @@ export default function QuickView() {
                     options={locations}
                     value={location}
                     onChange={(value: string) => setLocation(value)}
+                    disabled={showAdvanced}
                   />
                 </Box>
 
@@ -245,22 +265,32 @@ export default function QuickView() {
                     onChange={(value: string) => setSku(value)}
                     placeholder="Please provide SKU with minimum 3 characters"
                     autoComplete="off"
+                    disabled={showAdvanced}
                   />
                 </Box>
 
-                <Button variant="primary" onClick={handleSearch}>
+                <Button 
+                  onClick={handleSearch}
+                  disabled={showAdvanced}
+                >
                   Search
                 </Button>
               </InlineStack>
 
               <Box paddingBlockStart="200" paddingBlockEnd="200">
-                <Link
-                  monochrome
-                  url="#"
-                  onClick={() => setShowAdvanced((prev) => !prev)}
-                >
-                  Advanced Search
-                </Link>
+                <InlineStack gap="400" blockAlign="center" wrap>
+                  <Link
+                    monochrome
+                    url="#"
+                    onClick={() => {
+                      // Clear results when toggling between search modes
+                      setSearchResults([]);
+                      setShowAdvanced((prev) => !prev);
+                    }}
+                  >
+                    {showAdvanced ? "Basic Search" : "Advanced Search"}
+                  </Link>
+                </InlineStack>
               </Box>
 
               {showAdvanced && (
@@ -294,7 +324,7 @@ export default function QuickView() {
                       />
                     </Box>
 
-                    <Button variant="primary" onClick={handleAdvancedSearch}>Search</Button>
+                    <Button onClick={handleAdvancedSearch}>Search</Button>
                   </InlineStack>
                 </Box>
               )}
@@ -316,7 +346,7 @@ export default function QuickView() {
                         />
                       </Box>
                       <Box paddingBlockStart="500">
-                        <Button variant="primary" onClick={handleUpdateInventory}>
+                        <Button onClick={handleUpdateInventory}>
                           Update Inventory
                         </Button>
                       </Box>

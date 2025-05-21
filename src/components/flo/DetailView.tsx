@@ -254,6 +254,51 @@ export default function AnalyzeProductsPage() {
     setToastActive(true);
   }, [filteredSkus, inventoryUpdates]);
 
+  // Add function to export filtered SKUs to CSV
+  const exportToCSV = useCallback(() => {
+    if (filteredSkus.length === 0) {
+      setToastMessage('No data to export');
+      setToastActive(true);
+      return;
+    }
+
+    // Create CSV header row
+    let csvContent = 'SKU,Item Title,Variant ID,Mumbai Location,Unique Spare Warehouse\n';
+
+    // Add data rows
+    filteredSkus.forEach((skuGroup: SkuGroup) => {
+      skuGroup.items.forEach((item: SkuItem) => {
+        const row = [
+          `"${skuGroup.sku}"`,
+          `"${item.title}"`,
+          `"${item.variantId}"`,
+          `"${item.locations.mumbai}"`,
+          `"${item.locations.uniqueSpareWarehouse}"`
+        ].join(',');
+        csvContent += row + '\n';
+      });
+    });
+
+    // Create a blob and download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    // Set file name with current date
+    const date = new Date().toISOString().split('T')[0];
+    link.setAttribute('href', url);
+    link.setAttribute('download', `duplicate-skus-${date}.csv`);
+    link.style.visibility = 'hidden';
+    
+    // Append to the document, click, and remove
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setToastMessage('Export complete');
+    setToastActive(true);
+  }, [filteredSkus]);
+
   return (
     <Page
       title="Detailed View"
@@ -371,7 +416,7 @@ export default function AnalyzeProductsPage() {
                     </Button>
                     
                     <div style={{ marginLeft: 'auto' }}>
-                      <Button variant="primary">Export</Button>
+                      <Button variant="primary" onClick={exportToCSV}>Export</Button>
                     </div>
                   </InlineGrid>
                 </Box>
