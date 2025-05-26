@@ -4,11 +4,12 @@ import {
   Text,
   Box,
   BlockStack,
-  InlineStack, // Add this import
+  InlineStack,
   Link,
   IndexTable,
   Filters,
   Pagination,
+  Divider,
 } from '@shopify/polaris';
 import { useState, useCallback } from 'react';
 
@@ -32,6 +33,16 @@ export default function FloHistory() {
           variantId: '49871244984612',
           variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984612',
         },
+        {
+          title: 'Stivali in Pelle Marlene - EBANO / 41',
+          variantId: '49871244984613',
+          variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984613',
+        },
+        {
+          title: 'Stivali in Pelle Marlene - EBANO / 42',
+          variantId: '49871244984614',
+          variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984614',
+        },
       ],
       finalStock: {
         location: 'Warehouse 1',
@@ -48,8 +59,13 @@ export default function FloHistory() {
       syncedItems: [
         {
           title: 'Sneakers Classic - NERO / 42',
-          variantId: '49871244984613',
-          variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984613',
+          variantId: '49871244984615',
+          variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984615',
+        },
+        {
+          title: 'Sneakers Classic - NERO / 43',
+          variantId: '49871244984616',
+          variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984616',
         },
       ],
       finalStock: {
@@ -67,8 +83,23 @@ export default function FloHistory() {
       syncedItems: [
         {
           title: 'Test Product 1 - Variant A',
-          variantId: '49871244984614',
-          variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984614',
+          variantId: '49871244984617',
+          variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984617',
+        },
+        {
+          title: 'Test Product 1 - Variant B',
+          variantId: '49871244984618',
+          variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984618',
+        },
+        {
+          title: 'Test Product 1 - Variant C',
+          variantId: '49871244984619',
+          variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984619',
+        },
+        {
+          title: 'Test Product 1 - Variant D',
+          variantId: '49871244984620',
+          variantAdminLink: 'https://admin.shopify.com/store/your-store-name/products/49871244984620',
         },
       ],
       finalStock: {
@@ -219,84 +250,115 @@ export default function FloHistory() {
                             </IndexTable.Cell>
 
                             <IndexTable.Cell>
-                              <Box paddingInlineStart="200" paddingInlineEnd="200">
-                                <BlockStack gap="300">
-                                  {/* Order Info */}
-                                  <Text as="span" variant="bodySm">
-                                    <Text as="span" fontWeight="medium">Order:</Text> #{item.orderId} 
-                                    <Text as="span" tone="subdued"> • {item.orderDate}</Text>
-                                  </Text>
-                                  
-                                  {/* Product Info */}
-                                  <Text as="span" variant="bodySm">
-                                    <Text as="span" fontWeight="medium">Product:</Text>{' '}
-                                    <Link url={item.productAdminLink} external monochrome>
-                                      {item.productTitle}
-                                    </Link>
-                                  </Text>
-                                  
-                                  {/* Variant ID */}
-                                  <Text as="span" variant="bodySm">
-                                    <Text as="span" fontWeight="medium">Variant ID:</Text>{' '}
-                                    <Link 
-                                      url={`https://admin.shopify.com/store/your-store-name/products/${item.productVariantId}`}
-                                      external
-                                      monochrome
-                                    >
-                                      {item.productVariantId}
-                                    </Link>
-                                  </Text>
-                                  
-                                  {/* Synced Items */}
-                                  <BlockStack gap="100">
-                                    <Text as="span" variant="bodySm" fontWeight="medium">Synced with:</Text>
-                                    {item.syncedItems.map((syncedItem, idx) => (
-                                      <Box key={idx} paddingBlockStart="100" paddingBlockEnd="100" paddingInlineStart="200">
-                                        <InlineStack gap="200" align="start">
-                                          <Text as="span" variant="bodySm">
-                                            {idx + 1}.
-                                          </Text>
-                                          <BlockStack gap="100">
-                                            <Text as="span" variant="bodySm">
-                                              <Link url={syncedItem.variantAdminLink} external monochrome>
-                                                {syncedItem.title}
+                              <BlockStack gap="400">
+                                {/* First Card - Order Information */}
+                                <Card padding="300">
+                                  <Text variant="headingSm" as="h3">Order Information</Text>
+                                  <Box paddingBlockStart="300">
+                                    <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
+                                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                        <tbody>
+                                          <tr style={{ borderBottom: '1px solid #e4e5e7' }}>
+                                            <td style={{ padding: '8px 4px', textAlign: 'left' }}>
+                                              <Text as="span" variant="bodySm">Order ID</Text>
+                                            </td>
+                                            <td style={{ padding: '8px 4px', textAlign: 'left' }}>
+                                              <Text as="span" variant="bodySm">
+                                                #{item.orderId} {item.orderDate}
+                                              </Text>
+                                            </td>
+                                          </tr>
+                                          <tr style={{ borderBottom: '1px solid #e4e5e7' }}>
+                                            <td style={{ padding: '8px 4px', textAlign: 'left' }}>
+                                              <Text as="span" variant="bodySm">Product Title</Text>
+                                            </td>
+                                            <td style={{ padding: '8px 4px', textAlign: 'left' }}>
+                                              <Link url={item.productAdminLink}>
+                                                <Text as="span" variant="bodySm" truncate>{item.productTitle}</Text>
                                               </Link>
-                                            </Text>
-                                            <Text as="span" variant="bodySm" tone="subdued">
-                                              ID: {syncedItem.variantId}
-                                            </Text>
-                                          </BlockStack>
-                                        </InlineStack>
-                                      </Box>
-                                    ))}
-                                  </BlockStack>
-                                </BlockStack>
-                              </Box>
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td style={{ padding: '8px 4px', textAlign: 'left' }}>
+                                              <Text as="span" variant="bodySm">VariantID</Text>
+                                            </td>
+                                            <td style={{ padding: '8px 4px', textAlign: 'left' }}>
+                                              <Link url={`https://admin.shopify.com/store/your-store-name/products/${item.productVariantId}`}>
+                                                <Text as="span" variant="bodySm" truncate>{item.productVariantId}</Text>
+                                              </Link>
+                                            </td>
+                                          </tr>
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </Box>
+                                </Card>
+                                
+                                {/* Second Card - Synced Items */}
+                                <Card padding="300">
+                                  <Text variant="headingSm" as="h3">Synced Products</Text>
+                                  <Box paddingBlockStart="300">
+                                    <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
+                                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                        <thead>
+                                          <tr style={{ borderBottom: '1px solid #e4e5e7' }}>
+                                            <th style={{ padding: '8px 4px', textAlign: 'left' }}>
+                                              <Text as="span" variant="bodySm">Product Title</Text>
+                                            </th>
+                                            <th style={{ padding: '8px 4px', textAlign: 'left' }}>
+                                              <Text as="span" variant="bodySm">Variant ID</Text>
+                                            </th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {item.syncedItems.map((syncedItem, syncedIdx) => (
+                                            <tr key={syncedIdx} style={{ borderBottom: '1px solid #e4e5e7' }}>
+                                              <td style={{ padding: '8px 4px', textAlign: 'left' }}>
+                                                <Link url={syncedItem.variantAdminLink}>
+                                                  <Text as="span" variant="bodySm" truncate>{syncedItem.title}</Text>
+                                                </Link>
+                                              </td>
+                                              <td style={{ padding: '8px 4px', textAlign: 'left' }}>
+                                                <Text as="span" variant="bodySm" truncate>{syncedItem.variantId}</Text>
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </Box>
+                                </Card>
+                              </BlockStack>
                             </IndexTable.Cell>
 
-                            {/* Final Stock - UNCHANGED */}
+                            {/* Final Stock */}
                             <IndexTable.Cell>
-                              <IndexTable
-                                resourceName={{ singular: 'stock', plural: 'stocks' }}
-                                itemCount={1}
-                                headings={[
-                                  { title: 'Location' },
-                                  { title: 'Quantity' },
-                                ]}
-                                selectable={false}
-                              >
-                                <IndexTable.Row id="0" key="0" position={0}>
-                                  <IndexTable.Cell>{item.finalStock.location}</IndexTable.Cell>
-                                  <IndexTable.Cell>
-                                    <Text
-                                      as='span'
-                                      tone={item.finalStock.quantity < 0 ? 'critical' : undefined}
-                                    >
-                                      {item.finalStock.quantity}
-                                    </Text>
-                                  </IndexTable.Cell>
-                                </IndexTable.Row>
-                              </IndexTable>
+                              <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
+                                <IndexTable
+                                  resourceName={{ singular: 'stock', plural: 'stocks' }}
+                                  itemCount={1}
+                                  headings={[
+                                    { title: 'Location' },
+                                    { title: 'Quantity' },
+                                  ]}
+                                  selectable={false}
+                                  condensed
+                                >
+                                  <IndexTable.Row id="0" key="0" position={0}>
+                                    <IndexTable.Cell>
+                                      <Text as="span" truncate>{item.finalStock.location}</Text>
+                                    </IndexTable.Cell>
+                                    <IndexTable.Cell>
+                                      <Text
+                                        as='span'
+                                        tone={item.finalStock.quantity < 0 ? 'critical' : undefined}
+                                      >
+                                        {item.finalStock.quantity}
+                                      </Text>
+                                    </IndexTable.Cell>
+                                  </IndexTable.Row>
+                                </IndexTable>
+                              </div>
                             </IndexTable.Cell>
                           </IndexTable.Row>
                         ))}

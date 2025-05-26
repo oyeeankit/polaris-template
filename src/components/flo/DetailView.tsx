@@ -112,7 +112,7 @@ export default function AnalyzeProductsPage() {
       items: [
         {
           id: 1,
-          title: 'AFH swan neck ring splint, stainless steel',
+          title: 'AFH swan neck ring splint, stainless steel AFH swan neck ring splint, stainless steel',
           variantId: '39424166953037',
           locations: {
             mumbai: 100,
