@@ -446,27 +446,40 @@ export default function AnalyzeProductsPage() {
                 
                 <Box paddingBlockStart="500">
                   {filteredSkus.length > 0 ? (
-                    <DataTable
-                      columnContentTypes={['text', 'text', 'text']}
-                      headings={['#', 'Duplicate SKU Chart', 'Action']}
-                      rows={filteredSkus.map((skuGroup, index) => {
-                        // Create a cell component for the action column that positions the button at the bottom
-                        const actionCell = (
-                          <Box paddingBlockStart="400">
-                            <Button
-                              key={`action-update-${skuGroup.id}`}
-                              variant="secondary"
-                              onClick={() => handleUpdateInventory(skuGroup)}
-                              disabled={!inventoryUpdates[skuGroup.id]}
-                            >
-                              Update
-                            </Button>
-                          </Box>
-                        );
-                        
-                        return [
-                          (index + 1).toString(),
-                          <div key={`sku-chart-${skuGroup.id}`} style={{ 
+                    <>
+                      {/* Add this style to set a background for the entire header row */}
+                      <style>
+                        {`
+                          .Polaris-DataTable__Heading {
+                            background-color: var(--p-color-bg-surface-active) !important;
+                          }
+                        `}
+                      </style>
+                      <DataTable
+                        columnContentTypes={['text', 'text', 'text']}
+                        headings={[
+                          <Text key="parent-index-header" as="span" variant="bodyMd" fontWeight="bold" alignment="center">#</Text>,
+                          <Text key="parent-sku-header" as="span" variant="bodyMd" fontWeight="bold" alignment="center">Duplicate SKU Chart</Text>,
+                          <Text key="parent-action-header" as="span" variant="bodyMd" fontWeight="bold" alignment="center">Action</Text>
+                        ]}
+                        rows={filteredSkus.map((skuGroup, index) => {
+                          // Create a cell component for the action column that positions the button at the bottom
+                          const actionCell = (
+                            <Box paddingBlockStart="400">
+                              <Button
+                                key={`action-update-${skuGroup.id}`}
+                                variant="secondary"
+                                onClick={() => handleUpdateInventory(skuGroup)}
+                                disabled={!inventoryUpdates[skuGroup.id]}
+                              >
+                                Update
+                              </Button>
+                            </Box>
+                          );
+                          
+                          return [
+                            (index + 1).toString(),
+                            <div key={`sku-chart-${skuGroup.id}`} style={{ 
         padding: 0, 
         width: "100%", 
         minWidth: "260px",
@@ -489,17 +502,27 @@ export default function AnalyzeProductsPage() {
             
             <Box paddingBlockStart="400">
               <div style={{ overflowX: "auto", width: "100%" }}>
+                {/* Add this style to set a background for the entire header row */}
+                <style>
+                  {`
+                    .Polaris-DataTable__Heading {
+                      background-color: var(--p-color-bg-surface-active) !important;
+                    }
+                  `}
+                </style>
                 <DataTable
                   columnContentTypes={['text', 'text', 'text', 'text']}
                   headings={[
-                    '#', 
-                    'Product Details', 
-                    <div style={{ textAlign: "center", width: "100%" }}>Location 1</div>, 
-                    <div style={{ textAlign: "center", width: "100%" }}>Location 2</div>
+                    <Text key="index-header" as="span" variant="bodyMd" fontWeight="bold" alignment="center">#</Text>,
+                    <Text key="details-header" as="span" variant="bodyMd" fontWeight="bold" alignment="center">Product Details</Text>,
+                    <Text key="location1-header" as="span" variant="bodyMd" fontWeight="bold" alignment="center">Location 1</Text>,
+                    <Text key="location2-header" as="span" variant="bodyMd" fontWeight="bold" alignment="center">Location 2</Text>
                   ]}
                   rows={[
                     ...skuGroup.items.map((item: any, itemIndex: number) => [
-                      (itemIndex + 1).toString(),
+                      <div key={`index-${itemIndex}`} style={{ width: "30px", textAlign: "center" }}>
+                        {(itemIndex + 1).toString()}
+                      </div>,
                       <div key={`item-${item.id}`} style={{ 
                         minWidth: "260px", 
                         maxWidth: "100%",
@@ -515,54 +538,50 @@ export default function AnalyzeProductsPage() {
                           Variant ID: {item.variantId}
                         </Text>
                       </div>,
-                      <div key={`mumbai-${item.id}`} style={{ 
-                        textAlign: "center",
-                        width: "100%",
-                        whiteSpace: "normal",
-                        wordBreak: "break-word",
-                        minWidth: "80px"
-                      }}>
-                        <Text as="span">
-                          {item.locations.mumbai.toString()}
-                        </Text>
+                      <div key={`mumbai-cell-${item.id}`} style={{ width: "120px", textAlign: "center" }}>
+                        <Box key={`mumbai-${item.id}`} width="100%" padding="200" background="bg-surface-secondary">
+                          <Text as='span' alignment="center" tone={item.locations.mumbai === 0 ? "critical" : undefined} fontWeight="medium">
+                            {item.locations.mumbai.toString()}
+                          </Text>
+                        </Box>
                       </div>,
-                      <div key={`warehouse-${item.id}`} style={{ 
-                        textAlign: "center",
-                        width: "100%",
-                        whiteSpace: "normal",
-                        wordBreak: "break-word",
-                        minWidth: "80px"
-                      }}>
-                        <Text as="span">
-                          {item.locations.uniqueSpareWarehouse.toString()}
-                        </Text>
+                      <div key={`warehouse-cell-${item.id}`} style={{ width: "120px", textAlign: "center" }}>
+                        <Box key={`warehouse-${item.id}`} width="100%" padding="200" background="bg-surface-secondary">
+                          <Text as='span' alignment="center" tone={item.locations.uniqueSpareWarehouse === 0 ? "critical" : undefined} fontWeight="medium">
+                            {item.locations.uniqueSpareWarehouse.toString()}
+                          </Text>
+                        </Box>
                       </div>
                     ]),
                     [
                       '',
                       <Text key="update-label" as="span" fontWeight="medium">Update Inventory:</Text>,
-                      <Box key={`qty1-container-${skuGroup.id}`} width="100%">
-                        <TextField
-                          key={`qty1-${skuGroup.id}`}
-                          value={inventoryUpdates[skuGroup.id]?.mumbai || ''}
-                          placeholder="0"
-                          type="number"
-                          label=""
-                          autoComplete="off"
-                          onChange={(value) => handleInventoryChange(skuGroup.id, 'mumbai', value)}
-                        />
-                      </Box>,
-                      <Box key={`qty2-container-${skuGroup.id}`} width="100%">
-                        <TextField
-                          key={`qty2-${skuGroup.id}`}
-                          value={inventoryUpdates[skuGroup.id]?.uniqueSpareWarehouse || ''}
-                          placeholder="0"
-                          type="number"
-                          label=""
-                          autoComplete="off"
-                          onChange={(value) => handleInventoryChange(skuGroup.id, 'uniqueSpareWarehouse', value)}
-                        />
-                      </Box>
+                      <div key={`qty1-outer-${skuGroup.id}`} style={{ width: "120px", textAlign: "center" }}>
+                        <Box key={`qty1-container-${skuGroup.id}`} width="100%">
+                          <TextField
+                            key={`qty1-${skuGroup.id}`}
+                            value={inventoryUpdates[skuGroup.id]?.mumbai || ''}
+                            placeholder="0"
+                            type="number"
+                            label=""
+                            autoComplete="off"
+                            onChange={(value) => handleInventoryChange(skuGroup.id, 'mumbai', value)}
+                          />
+                        </Box>
+                      </div>,
+                      <div key={`qty2-outer-${skuGroup.id}`} style={{ width: "120px", textAlign: "center" }}>
+                        <Box key={`qty2-container-${skuGroup.id}`} width="100%">
+                          <TextField
+                            key={`qty2-${skuGroup.id}`}
+                            value={inventoryUpdates[skuGroup.id]?.uniqueSpareWarehouse || ''}
+                            placeholder="0"
+                            type="number"
+                            label=""
+                            autoComplete="off"
+                            onChange={(value) => handleInventoryChange(skuGroup.id, 'uniqueSpareWarehouse', value)}
+                          />
+                        </Box>
+                      </div>
                     ]
                   ]}
                   hideScrollIndicator
@@ -577,9 +596,10 @@ export default function AnalyzeProductsPage() {
   })}
   hideScrollIndicator
 />
+                    </>
                   ) : (
                     <Box padding="400" as="div">
-                      <div style={{ textAlign: 'center' }}>
+                      <div style={{ textAlign: "center" }}>
                         <Text as="p" tone="subdued">No duplicate SKUs found matching your criteria</Text>
                       </div>
                     </Box>

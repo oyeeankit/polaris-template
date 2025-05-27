@@ -121,9 +121,7 @@ const ContactSupport: React.FC = () => {
         <InlineGrid columns={{ xs: 1, sm: 1, md: 3 }} gap="500">
           {supportOptions.map((option, index) => (
             <Card key={index} padding="0">
-              {/* Wrap everything in a div with height 100% */}
               <div style={{ height: '100%' }}>
-                {/* Remove style prop from Box */}
                 <Box 
                   borderColor="border" 
                   borderRadius="300"
@@ -131,53 +129,48 @@ const ContactSupport: React.FC = () => {
                   paddingInlineEnd="0"
                 >
                   <BlockStack gap="400">
-                    <div
-                      style={{
-                        padding: "var(--p-space-500)",
-                        paddingBlockEnd: 0,
-                        display: "flex",
-                        alignItems: "center"
-                        // Remove justifyContent: "space-between" since we don't need to display availability
-                      }}
-                    >
-                      <div
-                        style={{
-                          backgroundColor: option.color,
-                          borderRadius: "var(--p-border-radius-full)",
-                          padding: "var(--p-space-300)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          minWidth: "40px",
-                          minHeight: "40px"
-                        }}
-                      >
-                        <Icon
-                          source={option.icon}
-                          accessibilityLabel={option.title}
-                        />
-                      </div>
-                    </div>
-                    
-                    <Box padding="400" paddingBlockStart="0" paddingBlockEnd="0">
-                      <BlockStack gap="200">
-                        <Text as="h2" variant="headingMd" fontWeight="semibold">
-                          {option.title}
-                        </Text>
+                    <Box padding="500" paddingBlockEnd="400">
+                      <BlockStack gap="300">
+                        {/* Icon and title on the same line */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "var(--p-space-300)" }}>
+                          <div
+                            style={{
+                              backgroundColor: option.color,
+                              borderRadius: "var(--p-border-radius-full)",
+                              padding: "var(--p-space-300)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              minWidth: "40px",
+                              minHeight: "40px"
+                            }}
+                          >
+                            <Icon
+                              source={option.icon}
+                              accessibilityLabel={option.title}
+                            />
+                          </div>
+                          <Text as="h2" variant="headingMd" fontWeight="semibold">
+                            {option.title}
+                          </Text>
+                        </div>
+
                         <Text as="p" variant="bodyMd">
                           {option.description}
                         </Text>
                       </BlockStack>
                     </Box>
                     
-                    <Box padding="400" paddingBlockStart="0" paddingBlockEnd="400">
-                      <Button
-                        onClick={option.action.onAction}
-                        variant={option.action.primary ? "primary" : "secondary"}
-                        fullWidth
-                      >
-                        {option.action.content}
-                      </Button>
+                    <Box padding="500" paddingBlockStart="0" paddingBlockEnd="400">
+                      {/* Button with auto width and left alignment */}
+                      <div style={{ display: "flex", justifyContent: "flex-start" }}>
+                        <Button
+                          onClick={option.action.onAction}
+                          variant={option.action.primary ? "primary" : "secondary"}
+                        >
+                          {option.action.content}
+                        </Button>
+                      </div>
                     </Box>
                   </BlockStack>
                 </Box>

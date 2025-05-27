@@ -190,7 +190,7 @@ export default function FloHistory() {
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   return (
-    <Page title="History">
+    <Page fullWidth title="History">
       <BlockStack gap="400">
         <Card>
           <BlockStack gap="0">
@@ -234,7 +234,7 @@ export default function FloHistory() {
                         itemCount={filteredData.length}
                         selectable={false}
                         headings={[
-                          { title: 'SKU', alignment: 'start' },
+                          { title: 'SKU', alignment: 'center' },
                           { title: 'Details', alignment: 'center' },
                           { title: 'Final Stock', alignment: 'center' },
                         ]}
@@ -246,7 +246,7 @@ export default function FloHistory() {
                             position={index}
                           >
                             <IndexTable.Cell>
-                              <div style={{ width: '200px', maxWidth: '200px' }}>
+                              <div style={{ width: "20%", minWidth: "150px" }}>
                                 <div
                                   style={{
                                     wordBreak: 'break-word',
@@ -265,7 +265,7 @@ export default function FloHistory() {
                             </IndexTable.Cell>
 
                             <IndexTable.Cell>
-                              <div style={{ width: '400px', maxWidth: '400px' }}>
+                              <div style={{ width: "60%", minWidth: "400px" }}>
                                 {/* Details content remains unchanged */}
                                 <BlockStack gap="400">
                                   {/* First Card - Order Information */}
@@ -369,7 +369,7 @@ export default function FloHistory() {
 
                             {/* Final Stock */}
                             <IndexTable.Cell>
-                              <div style={{ width: '200px', maxWidth: '100%' }}>
+                              <div style={{ width: "20%", minWidth: "200px" }}>
                                 <Card padding="300">
                                   <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
                                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
