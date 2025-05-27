@@ -112,7 +112,7 @@ export default function AnalyzeProductsPage() {
       items: [
         {
           id: 1,
-          title: 'AFH swan neck ring splint, stainless steel AFH swan neck ring splint, stainless steel',
+          title: 'AFH swan neck ring splint, stainlessAFH swan neck ring splint, stainless  steel AFH swan neck ring splint, stainless steel',
           variantId: '39424166953037',
           locations: {
             mumbai: 100,
@@ -265,8 +265,8 @@ export default function AnalyzeProductsPage() {
       return;
     }
 
-    // Create CSV header row
-    let csvContent = 'SKU,Item Title,Variant ID,Mumbai Location,Unique Spare Warehouse\n';
+    // Create CSV header row with updated column names
+    let csvContent = 'SKU,Item Title,Variant ID,Location 1,Location 2\n';
 
     // Add data rows
     filteredSkus.forEach((skuGroup: SkuGroup) => {
@@ -357,32 +357,34 @@ export default function AnalyzeProductsPage() {
               </Text>
 
               <Box paddingBlockStart="400">
-                <Select
-                  label="Select SKU Scope"
-                  options={options}
-                  onChange={setSelectedSkuOption}
-                  value={selectedSkuOption}
-                  disabled={isAnalyzing}
-                />
-              </Box>
-
-              <Box paddingBlockStart="400">
-                <Button
-                  onClick={handleAnalyze}
-                  variant="primary"
-                  disabled={isAnalyzing}
-                >
-                  Analyze Now
-                </Button>
+                <InlineGrid columns={{ xs: '1fr', sm: '2fr 1fr' }} gap="400" alignItems="end">
+                  <Select
+                    label="Select SKU Scope"
+                    options={options}
+                    onChange={setSelectedSkuOption}
+                    value={selectedSkuOption}
+                    disabled={isAnalyzing}
+                  />
+                  
+                  <Button
+                    onClick={handleAnalyze}
+                    variant="primary"
+                    disabled={isAnalyzing}
+                    fullWidth
+                  >
+                    Analyze Now
+                  </Button>
+                </InlineGrid>
               </Box>
 
               {isAnalyzing && (
                 <Box paddingBlockStart="400">
-                  <Box
-                    as="div"
-                    paddingBlockEnd="300"
-
-
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      paddingBlockEnd: "var(--p-space-300)"
+                    }}
                   >
                     <Box paddingInlineEnd="200">
                       <Spinner size="small" />
@@ -390,7 +392,7 @@ export default function AnalyzeProductsPage() {
                     <Text variant="bodySm" as="p">
                       <b>{variantsScanned}</b> Variants scanned
                     </Text>
-                  </Box>
+                  </div>
                   <ProgressBar
                     progress={Math.floor((variantsScanned / totalVariants) * 100)}
                     size="small"
@@ -464,86 +466,117 @@ export default function AnalyzeProductsPage() {
                         
                         return [
                           (index + 1).toString(),
-                          <Box key={`sku-chart-${skuGroup.id}`} padding="0">
-                            <Card>
-                              <Box padding="300">
-                                <InlineGrid gap="200" columns="1fr auto" alignItems="center">
-                                  <Text as="h4" variant="headingSm">
-                                    SKU: <Text fontWeight="bold" as="span">{skuGroup.sku}</Text>
-                                  </Text>
-                                  <Button 
-                                    size="slim" 
-                                    icon={RefreshIcon} 
-                                    onClick={() => handleRefreshChart(skuGroup.id)}
-                                  >
-                                    Refresh
-                                  </Button>
-                                </InlineGrid>
-                                
-                                <Box paddingBlockStart="400">
-                                  <DataTable
-                                    columnContentTypes={['text', 'text', 'text', 'text']}
-                                    headings={[
-                                      '#', 
-                                      'Product Details', 
-                                      'Mumbai Location', 
-                                      'Unique Spare Warehouse'
-                                    ]}
-                                    rows={[
-                                      ...skuGroup.items.map((item: any, itemIndex: number) => [
-                                        (itemIndex + 1).toString(),
-                                        <Box key={`item-${item.id}`}>
-                                          <Text as="span" fontWeight="medium">{item.title}</Text>
-                                          <br />
-                                          <Text as="span" tone="subdued" variant="bodySm" breakWord>
-                                            Variant ID: {item.variantId} | SKU: {skuGroup.sku}
-                                          </Text>
-                                        </Box>,
-                                        <Text key={`mumbai-${item.id}`} as="span" alignment="center">
-                                          {item.locations.mumbai.toString()}
-                                        </Text>,
-                                        <Text key={`warehouse-${item.id}`} as="span" alignment="center">
-                                          {item.locations.uniqueSpareWarehouse.toString()}
-                                        </Text>
-                                      ]),
-                                      [
-                                        '',
-                                        <Text key="update-label" as="span" fontWeight="medium">Update Inventory:</Text>,
-                                        <Box key={`qty1-container-${skuGroup.id}`} width="100%">
-                                          <TextField
-                                            key={`qty1-${skuGroup.id}`}
-                                            value={inventoryUpdates[skuGroup.id]?.mumbai || ''}
-                                            placeholder="0"
-                                            type="number"
-                                            label=""
-                                            autoComplete="off"
-                                            onChange={(value) => handleInventoryChange(skuGroup.id, 'mumbai', value)}
-                                          />
-                                        </Box>,
-                                        <Box key={`qty2-container-${skuGroup.id}`} width="100%">
-                                          <TextField
-                                            key={`qty2-${skuGroup.id}`}
-                                            value={inventoryUpdates[skuGroup.id]?.uniqueSpareWarehouse || ''}
-                                            placeholder="0"
-                                            type="number"
-                                            label=""
-                                            autoComplete="off"
-                                            onChange={(value) => handleInventoryChange(skuGroup.id, 'uniqueSpareWarehouse', value)}
-                                          />
-                                        </Box>
-                                      ]
-                                    ]}
-                                    hideScrollIndicator
-                                  />
-                                </Box>
-                              </Box>
-                            </Card>
-                          </Box>,
-                          actionCell
-                        ];
-                      })}
-                      hideScrollIndicator
-                    />
+                          <div key={`sku-chart-${skuGroup.id}`} style={{ 
+        padding: 0, 
+        width: "100%", 
+        minWidth: "260px",
+        overflowX: "auto" 
+      }}>
+        <Card>
+          <Box padding="300">
+            <InlineGrid gap="200" columns={{ xs: '1fr', sm: '1fr auto' }} alignItems="center">
+              <Text as="h4" variant="headingSm">
+                SKU: <Text fontWeight="bold" as="span">{skuGroup.sku}</Text>
+              </Text>
+              <Button 
+                size="slim" 
+                icon={RefreshIcon} 
+                onClick={() => handleRefreshChart(skuGroup.id)}
+              >
+                Refresh
+              </Button>
+            </InlineGrid>
+            
+            <Box paddingBlockStart="400">
+              <div style={{ overflowX: "auto", width: "100%" }}>
+                <DataTable
+                  columnContentTypes={['text', 'text', 'text', 'text']}
+                  headings={[
+                    '#', 
+                    'Product Details', 
+                    <div style={{ textAlign: "center", width: "100%" }}>Location 1</div>, 
+                    <div style={{ textAlign: "center", width: "100%" }}>Location 2</div>
+                  ]}
+                  rows={[
+                    ...skuGroup.items.map((item: any, itemIndex: number) => [
+                      (itemIndex + 1).toString(),
+                      <div key={`item-${item.id}`} style={{ 
+                        minWidth: "260px", 
+                        maxWidth: "100%",
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word",
+                        whiteSpace: "normal"
+                      }}>
+                        <Text as="span" fontWeight="medium">
+                          {item.title}
+                        </Text>
+                        <br />
+                        <Text as="span" tone="subdued" variant="bodySm">
+                          Variant ID: {item.variantId}
+                        </Text>
+                      </div>,
+                      <div key={`mumbai-${item.id}`} style={{ 
+                        textAlign: "center",
+                        width: "100%",
+                        whiteSpace: "normal",
+                        wordBreak: "break-word",
+                        minWidth: "80px"
+                      }}>
+                        <Text as="span">
+                          {item.locations.mumbai.toString()}
+                        </Text>
+                      </div>,
+                      <div key={`warehouse-${item.id}`} style={{ 
+                        textAlign: "center",
+                        width: "100%",
+                        whiteSpace: "normal",
+                        wordBreak: "break-word",
+                        minWidth: "80px"
+                      }}>
+                        <Text as="span">
+                          {item.locations.uniqueSpareWarehouse.toString()}
+                        </Text>
+                      </div>
+                    ]),
+                    [
+                      '',
+                      <Text key="update-label" as="span" fontWeight="medium">Update Inventory:</Text>,
+                      <Box key={`qty1-container-${skuGroup.id}`} width="100%">
+                        <TextField
+                          key={`qty1-${skuGroup.id}`}
+                          value={inventoryUpdates[skuGroup.id]?.mumbai || ''}
+                          placeholder="0"
+                          type="number"
+                          label=""
+                          autoComplete="off"
+                          onChange={(value) => handleInventoryChange(skuGroup.id, 'mumbai', value)}
+                        />
+                      </Box>,
+                      <Box key={`qty2-container-${skuGroup.id}`} width="100%">
+                        <TextField
+                          key={`qty2-${skuGroup.id}`}
+                          value={inventoryUpdates[skuGroup.id]?.uniqueSpareWarehouse || ''}
+                          placeholder="0"
+                          type="number"
+                          label=""
+                          autoComplete="off"
+                          onChange={(value) => handleInventoryChange(skuGroup.id, 'uniqueSpareWarehouse', value)}
+                        />
+                      </Box>
+                    ]
+                  ]}
+                  hideScrollIndicator
+                />
+              </div>
+            </Box>
+          </Box>
+        </Card>
+      </div>,
+      actionCell
+    ];
+  })}
+  hideScrollIndicator
+/>
                   ) : (
                     <Box padding="400" as="div">
                       <div style={{ textAlign: 'center' }}>
