@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Page,
   Card,
@@ -28,11 +28,29 @@ const Home: React.FC = () => {
   const [popoverActive, setPopoverActive] = useState(false);
   const togglePopoverActive = () => setPopoverActive((active) => !active);
 
-  const locationOptions = ['Warehouse A', 'Warehouse B', 'Storefront'];
+  // Updated location options 
+  const locationOptions = ['Location 1', 'Location 2', 'Location 3'];
 
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [toastActive, setToastActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Add effect to auto-dismiss toast after 3 seconds
+  useEffect(() => {
+    let toastTimer: NodeJS.Timeout;
+    
+    if (toastActive) {
+      toastTimer = setTimeout(() => {
+        setToastActive(false);
+      }, 3000); // 3 seconds (changed from 1000)
+    }
+    
+    // Cleanup function to clear the timer if component unmounts
+    // or if toast is dismissed manually before timeout
+    return () => {
+      if (toastTimer) clearTimeout(toastTimer);
+    };
+  }, [toastActive]);
 
   const handleSelectLocation = (location: string) => {
     if (!selectedLocations.includes(location)) {
@@ -66,7 +84,7 @@ const Home: React.FC = () => {
     <Page>
       <BlockStack gap="400">
         {/* App Title */}
-        <Box paddingBlockEnd="200">
+        <Box paddingBlockEnd="400">
           <Text as="h1" variant="headingLg" fontWeight="bold">
             Flo App
           </Text>
@@ -74,10 +92,12 @@ const Home: React.FC = () => {
 
         {/* Info Banner */}
         <Banner tone="info">
-          <InlineStack align="space-between" blockAlign="center">
-            <Text as="span" variant="bodyMd">
-              The app helps to keep the matching SKUs in sync.
-            </Text>
+          <InlineStack gap="400" blockAlign="center" wrap={false}>
+            <Box width="fill">
+              <Text as="span" variant="bodyMd">
+                The app helps to keep the Duplicate SKUs in sync.
+              </Text>
+            </Box>
             <Button url="#" variant="primary" size="slim">
               Getting Started Guide
             </Button>
@@ -85,18 +105,19 @@ const Home: React.FC = () => {
         </Banner>
 
         {/* Duplicate SKU Sync */}
-        <Card>
-          <InlineStack align="space-between" blockAlign="center" wrap={false}>
-            <Text as="span" variant="bodyMd" fontWeight="medium">
-               SKU Sync
+        <Card padding="400">
+          <InlineStack align="space-between" blockAlign="center" gap="400">
+            <Text as="h2" variant="headingSm" fontWeight="medium">
+              Duplicate SKU Sync
             </Text>
-            <Box minWidth="200px" maxWidth="300px">
+            <Box minWidth="200px">
               <Select
                 options={skuSyncOptions}
                 value={skuSync}
                 onChange={handleSkuSyncChange}
-                label="Duplicate SKU Sync"
+                label="Sync mode"
                 labelHidden
+                disabled={isLoading}
               />
             </Box>
           </InlineStack>
@@ -105,59 +126,53 @@ const Home: React.FC = () => {
         {/* Blacklisted Locations */}
         <Card padding="400">
           <BlockStack gap="400">
-            <InlineStack align="space-between" blockAlign="center">
-              <Box>
-                <Text as="span" variant="bodyMd" fontWeight="medium">
+            <BlockStack gap="200">
+              <InlineStack align="space-between" blockAlign="center">
+                <Text as="h2" variant="headingSm" fontWeight="medium">
                   Blacklisted Locations
                 </Text>
-              </Box>
-              <Popover
-                active={popoverActive}
-                activator={
-                  <Button
-                    variant="secondary"
-                    onClick={togglePopoverActive}
-                    disclosure
-                    aria-label="Select a location to blacklist"
-                  >
-                    Add Location
-                  </Button>
-                }
-                onClose={togglePopoverActive}
-              >
-                <ActionList items={locationActions} />
-              </Popover>
-            </InlineStack>
-
-            <BlockStack gap="050">
+                <Popover
+                  active={popoverActive}
+                  activator={
+                    <Button
+                      variant="secondary"
+                      onClick={togglePopoverActive}
+                      disclosure
+                      aria-label="Select a location to blacklist"
+                    >
+                      Add Location
+                    </Button>
+                  }
+                  onClose={togglePopoverActive}
+                >
+                  <ActionList items={locationActions} />
+                </Popover>
+              </InlineStack>
+              
               <Text as="p" variant="bodySm" tone="subdued">
                 Inventory at these locations will not be synced.
-              </Text>
-              <Text as="p" variant="bodySm">
-                <Link url="#" removeUnderline>
-                  More info
-                </Link>
+                <Link url="#" removeUnderline> More info</Link>
               </Text>
             </BlockStack>
 
             {/* Table to show selected locations */}
             {selectedLocations.length > 0 && (
-              <BlockStack gap="100">
+              <BlockStack gap="300">
                 {/* Table Header */}
                 <InlineStack align="space-between" blockAlign="center">
-                  <Box width="70%">
+                  <Box width="60%">
                     <Text as="span" variant="bodySm" fontWeight="bold">
                       Location
                     </Text>
                   </Box>
-                  <Box width="30%">
+                  <Box width="40%" paddingInlineStart="300">
                     <Text as="span" variant="bodySm" fontWeight="bold">
                       Action
                     </Text>
                   </Box>
                 </InlineStack>
 
-                <Box borderBlockEndWidth="050" borderColor="border" />
+                <Box borderBlockEndWidth="025" borderColor="border" />
 
                 {/* Table Rows */}
                 {selectedLocations.map((loc) => (
@@ -165,17 +180,18 @@ const Home: React.FC = () => {
                     key={loc}
                     align="space-between"
                     blockAlign="center"
+                    gap="200"
                     wrap={false}
                   >
-                    <Box width="70%">
+                    <Box width="60%">
                       <Text as="span" variant="bodySm">
                         {loc}
                       </Text>
                     </Box>
-                    <Box width="30%">
+                    <Box width="40%">
                       <Button
                         onClick={() => handleRemoveLocation(loc)}
-                        variant="tertiary"
+                        variant="plain"
                         icon={DeleteIcon}
                       >
                         Remove
@@ -185,9 +201,9 @@ const Home: React.FC = () => {
                 ))}
               </BlockStack>
             )}
-
+            
             {selectedLocations.length === 0 && (
-              <Box padding="400">
+              <Box padding="400" background="bg-surface-secondary" borderRadius="100">
                 <Text as="p" variant="bodyMd" tone="subdued" alignment="center">
                   No locations blacklisted.
                 </Text>
@@ -200,6 +216,12 @@ const Home: React.FC = () => {
       {/* Toast Message */}
       {toastActive && (
         <Toast content="Sync setting saved successfully" onDismiss={() => setToastActive(false)} />
+      )}
+      
+      {isLoading && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.5)', zIndex: 1000 }}>
+          <Spinner size="large" />
+        </div>
       )}
     </Page>
   );

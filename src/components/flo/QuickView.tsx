@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Page,
   Card,
@@ -16,8 +16,8 @@ import {
   DataTable,
   Toast,
   Badge,
-  Tooltip,
-  Thumbnail,
+  ButtonGroup,
+  Thumbnail, // Add this import for product images
 } from '@shopify/polaris';
 import { useNavigate } from 'react-router-dom';
 
@@ -27,6 +27,8 @@ interface SearchResultItem {
   sku: string;
   title: string;
   inventory: number;
+  image?: string; // Add image URL property
+  date?: string; // Add date property
 }
 
 export default function QuickView() {
@@ -45,7 +47,21 @@ export default function QuickView() {
   const [toastActive, setToastActive] = useState(false);
   const [toastContent, setToastContent] = useState('');
   const [toastError, setToastError] = useState(false);
-  const toggleToastActive = () => setToastActive((active) => !active);
+
+  // Add this new function to show toast with auto-dismiss
+  const showToast = useCallback((content: string, isError: boolean = false) => {
+    setToastContent(content);
+    setToastError(isError);
+    setToastActive(true);
+    
+    // Auto-dismiss after 3 seconds (3000ms)
+    const timer = setTimeout(() => {
+      setToastActive(false);
+    }, 3000);
+    
+    // Clear the timeout if the component unmounts
+    return () => clearTimeout(timer);
+  }, []);
 
   const locations = [
     { label: 'Warehouse 1', value: 'warehouse1' },
@@ -58,53 +74,53 @@ export default function QuickView() {
       // Regular search
       if (sku.length < 3) {
         setSearchResults([]);
-        setToastContent('Please provide SKU with minimum 3 characters');
-        setToastError(true);
-        setToastActive(true);
+        showToast('Enter SKU with minimum 3 characters', true);
         return;
       }
 
       if (location === 'warehouse1' && sku.toUpperCase() === 'ABC') {
         setSearchResults([
           {
-            shopifyId: '8011199873175',
-            variantId: '43120834510999',
-            sku: 'ABC',
-            title: 'MX ANYWHERE 3 無線高階靜音滑鼠 - 石墨灰',
+            shopifyId: '9646363279652',
+            variantId: '49865314894116',
+            sku: '_CAMOSCIO_EBANO_374_ROT_NOCE+NERO39',
+            title: 'Stivali Texani in Camoscio Stivali Texani Stivali Texani in Camoscio Stivali Texani in Camosc Victoria  tivali Texani in Camoscio Victoria- EBANO / 39',
             inventory: 0,
+            image: 'https://cdn.shopify.com/s/files/1/0012/3456/7894/products/shoe-sample.jpg',
+            date: '2025-05-20',
           },
         ]);
       } else {
         setSearchResults([]);
-        setToastContent('No results found');
-        setToastError(true);
-        setToastActive(true);
+        showToast('No results found', true);
       }
     } else {
       // Advanced search
       if (advancedSku.length < 3) {
         setSearchResults([]);
-        setToastContent('Please provide SKU with minimum 3 characters');
-        setToastError(true);
-        setToastActive(true);
+        showToast('Please provide SKU with minimum 3 characters', true);
         return;
       }
 
-      // Mock data for testing different conditions
+      // Mock data with added image and date properties
       const mockProducts = [
         {
-          shopifyId: '8011199873175',
-          variantId: '43120834510999',
-          sku: 'ABC123',
-          title: 'MX ANYWHERE 3 無線高階靜音滑鼠 - 石墨灰',
+          shopifyId: '9646363279652',
+          variantId: '49865314894116',
+          sku: 'M302_CAMOSCIO_EBANO_374_ROT_NOCE+NERO39',
+          title: 'Stivali Texani Stivali Texani in Camoscio Victoria - EBANO / 39 in Camoscio Victoria - EBANO / 39',
           inventory: 5,
+          image: 'https://cdn.shopify.com/s/files/1/0012/3456/7894/products/shoe-sample.jpg',
+          date: '2025-05-20',
         },
         {
           shopifyId: '8011199873176',
           variantId: '43120834511000',
           sku: 'ABC456',
-          title: 'MX MASTER 3 無線高階滑鼠 - 黑色',
+          title: 'MSAMSUNG 32-inch S3 (S39GD) FHD 2025',
           inventory: 10,
+          image: 'https://cdn.shopify.com/s/files/1/0012/3456/7894/products/monitor.jpg',
+          date: '2025-05-22',
         },
         {
           shopifyId: '8011199873177',
@@ -112,6 +128,8 @@ export default function QuickView() {
           sku: 'XYZ123',
           title: 'K380 多工藍牙鍵盤 - 白色',
           inventory: 15,
+          image: 'https://cdn.shopify.com/s/files/1/0012/3456/7894/products/keyboard.jpg',
+          date: '2025-05-19',
         }
       ];
 
@@ -136,9 +154,7 @@ export default function QuickView() {
         setSearchResults(filteredResults);
       } else {
         setSearchResults([]);
-        setToastContent('No results found');
-        setToastError(true);
-        setToastActive(true);
+        showToast('No results found', true);
       }
     }
   };
@@ -148,74 +164,275 @@ export default function QuickView() {
   };
 
   const handleUpdateInventory = () => {
-    if (!restockQty || Number(restockQty) < 0) {
-      setToastContent('Please enter a valid restock quantity');
-      setToastError(true);
-      setToastActive(true);
+    if (!restockQty || isNaN(Number(restockQty))) {
+      showToast('Enter a valid quantity', true);
       return;
     }
+    
     if (searchResults.length === 0) {
-      setToastContent('No product selected to update');
-      setToastError(true);
-      setToastActive(true);
+      showToast('No product selected', true);
       return;
     }
 
-    const updatedResults = searchResults.map(item => ({
-      ...item,
-      inventory: item.inventory + Number(restockQty),
-    }));
-    setSearchResults(updatedResults);
-    setToastContent('Inventory updated successfully!');
-    setToastError(false);
-    setToastActive(true);
-    setRestockQty('');
-  };
+    // Convert to number once for reuse
+    const newQuantity = Number(restockQty);
 
-  const renderInventoryStatus = (inventory: number) => {
-    if (inventory <= 0) {
-      return <Badge tone="critical">Out of stock</Badge>;
-    } else if (inventory < 5) {
-      return <Badge tone="warning">{`Low stock: ${inventory.toString()}`}</Badge>;
-    } else {
-      return <Badge tone="success">{`In stock: ${inventory.toString()}`}</Badge>;
-    }
+    const updatedResults = searchResults.map(item => {
+      // Set inventory directly to the value entered by the user
+      return {
+        ...item,
+        inventory: newQuantity,
+      };
+    });
+    
+    setSearchResults(updatedResults);
+    
+    // Update the toast message to reflect direct replacement
+    showToast(`Inventory updated to ${newQuantity}`, false);
+    
+    setRestockQty(''); // Clear the input field after update
   };
 
   // Create a formatted row for each search result
   const rows = searchResults.map((item, index) => [
-    String(index + 1), // Convert to string to avoid type errors
-    <InlineStack gap="300" align="start" blockAlign="center" key={`product-${item.variantId}`}>
-      <Box width="40px">
-        <Thumbnail
-          source="https://cdn.shopify.com/s/files/1/0757/9955/files/placeholder-image.svg"
-          alt={item.title}
-          size="small"
-        />
-      </Box>
-      <BlockStack gap="100">
-        <Text as="span" variant="bodyMd" fontWeight="bold" truncate>
-          {item.title}
+    // Row number column
+    <Box padding="300" key={`num-${item.variantId}`}>
+      <div style={{ 
+        paddingTop: "8px",
+        textAlign: "center"
+      }}>
+        <Text as="span" variant="bodyMd" fontWeight="medium">
+          {index + 1}
         </Text>
-        <Text as="span" variant="bodySm" tone="subdued">
-          SKU: {item.sku}
+      </div>
+    </Box>,
+    
+    // Product column with proper structured display to match image
+    <Box padding="300" key={`product-${item.variantId}`} width="100%">
+      <Card padding="300">
+        <BlockStack gap="100">
+          {/* Product title with blue highlight and improved wrapping */}
+          <div style={{ 
+            fontWeight: "500", 
+            fontSize: "16px",
+            color: "#2C6ECB",
+            marginBottom: "8px",
+            wordBreak: "break-word", // Allow wrapping for long titles
+            lineHeight: "1.4", // Improve line height for wrapped text
+            maxHeight: "none", // Remove any max height that might be causing truncation
+            overflow: "visible", // Ensure content isn't hidden
+            whiteSpace: "normal", // Allow text to wrap normally
+            display: "block" // Make sure it's displayed as a block
+          }}>
+            {item.title}
+          </div>
+          
+          {/* Product details in table-like format as shown in the image */}
+          <div style={{ 
+            display: "table",
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: "13px",
+            tableLayout: "fixed" // Force table to respect column widths
+          }}>
+            {/* Shopify ID row */}
+            <div style={{ display: "table-row" }}>
+              <div style={{ 
+                display: "table-cell", 
+                padding: "4px 8px 4px 0", 
+                whiteSpace: "nowrap",
+                width: "80px",
+                color: "#6D7175",
+                verticalAlign: "top"
+              }}>
+                Shopify ID
+              </div>
+              <div style={{ 
+                display: "table-cell", 
+                padding: "4px 0", 
+                color: "#202223",
+                fontWeight: "normal",
+                wordBreak: "break-all" // Allow wrapping for long IDs
+              }}>
+                {item.shopifyId}
+              </div>
+            </div>
+            
+            {/* Variant ID row */}
+            <div style={{ display: "table-row" }}>
+              <div style={{ 
+                display: "table-cell", 
+                padding: "4px 8px 4px 0", 
+                whiteSpace: "nowrap",
+                color: "#6D7175",
+                verticalAlign: "top"
+              }}>
+                Variant ID
+              </div>
+              <div style={{ 
+                display: "table-cell", 
+                padding: "4px 0", 
+                color: "#202223",
+                fontWeight: "normal",
+                wordBreak: "break-all" // Allow wrapping for long IDs
+              }}>
+                {item.variantId}
+              </div>
+            </div>
+            
+            {/* SKU row */}
+            <div style={{ display: "table-row" }}>
+              <div style={{ 
+                display: "table-cell", 
+                padding: "4px 8px 4px 0", 
+                whiteSpace: "nowrap",
+                width: "80px",
+                color: "#6D7175",
+                verticalAlign: "top"
+              }}>
+                SKU
+              </div>
+              <div style={{ 
+                display: "table-cell", 
+                padding: "4px 0", 
+                color: "#202223",
+                fontWeight: "normal",
+                wordBreak: "break-all", // Allow SKUs to wrap if very long
+                whiteSpace: "normal", // Allow text to wrap naturally
+                maxHeight: "none", // Remove any height limitation
+                overflow: "visible", // Ensure content isn't hidden
+                lineHeight: "1.4" // Improve readability of wrapped text
+              }}>
+                {item.sku}
+              </div>
+            </div>
+          </div>
+        </BlockStack>
+      </Card>
+    </Box>,
+    
+    // Inventory column
+    <Box padding="300" key={`inventory-${item.variantId}`}>
+      <div style={{ 
+        textAlign: "center",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        paddingTop: "8px"
+      }}>
+        <Text as="span" variant="bodyMd" fontWeight="medium">
+          {item.inventory.toString()}
         </Text>
-      </BlockStack>
-    </InlineStack>,
-    renderInventoryStatus(item.inventory),
-    <InlineStack gap="200" key={`actions-${item.variantId}`}>
-      <Button size="slim" onClick={() => {}}>View</Button>
-      <Button size="slim" variant="primary" onClick={() => {
-        // Pre-fill the restock field with a suggested value (e.g. enough to reach 10 items)
-        const suggestedRestock = Math.max(0, 10 - item.inventory);
-        setRestockQty(suggestedRestock.toString());
-      }}>Restock</Button>
-    </InlineStack>
+      </div>
+    </Box>,
+    
+    // Action buttons
+    <Box padding="300" key={`actions-${item.variantId}`}>
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "center", 
+        alignItems: "center", 
+        height: "100%",
+        paddingTop: "8px"
+      }}>
+        <ButtonGroup variant="segmented">
+          <Button 
+            size="slim"
+            onClick={() => {
+              window.open(`https://admin.shopify.com/store/your-store/products/${item.shopifyId}`, '_blank');
+            }}
+          >
+            View
+          </Button>
+          <Button 
+            size="slim"
+            onClick={() => {
+              window.open(`https://admin.shopify.com/store/your-store/products/${item.shopifyId}/edit`, '_blank');
+            }}
+          >
+            Edit
+          </Button>
+        </ButtonGroup>
+      </div>
+    </Box>
   ]);
+
+  // Update your tableStyles with fixed widths for columns
+  const tableStyles = `
+    /* Force full-width table */
+    .Polaris-DataTable {
+      width: 100% !important;
+    }
+    
+    .Polaris-DataTable__Table {
+      width: 100% !important;
+      table-layout: fixed !important;
+      border-collapse: collapse !important;
+      border-spacing: 0 !important;
+    }
+    
+    /* Fixed column widths */
+    .Polaris-DataTable__Cell:nth-child(1),
+    .Polaris-DataTable__Cell--header:nth-child(1) {
+      width: 50px !important;
+      min-width: 50px !important;
+      max-width: 50px !important;
+      padding-right: 0 !important;
+    }
+    
+    .Polaris-DataTable__Cell:nth-child(2),
+    .Polaris-DataTable__Cell--header:nth-child(2) {
+      width: calc(100% - 240px) !important;
+      min-width: 350px !important;
+      padding-right: 8px !important;
+    }
+    
+    .Polaris-DataTable__Cell:nth-child(3),
+    .Polaris-DataTable__Cell--header:nth-child(3) {
+      width: 80px !important;
+      min-width: 80px !important;
+      max-width: 80px !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      text-align: center !important;
+      vertical-align: middle !important;
+    }
+    
+    .Polaris-DataTable__Cell:nth-child(4),
+    .Polaris-DataTable__Cell--header:nth-child(4) {
+      width: 110px !important;
+      min-width: 110px !important;
+      max-width: 110px !important;
+      padding-left: 0 !important;
+      text-align: center !important;
+    }
+    
+    /* Consistent cell height for better layout with images */
+    .Polaris-DataTable__Cell {
+      border: none !important;
+      border-bottom: 1px solid #E1E3E5 !important;
+      vertical-align: middle !important;
+      height: 120px !important; /* Increased height to accommodate image cards */
+    }
+    
+    /* Special styling for header cells */
+    .Polaris-DataTable__Cell--header {
+      border-bottom: 2px solid #E1E3E5 !important;
+      background-color: #F9FAFB;
+      height: auto !important;
+    }
+    
+    /* Improve card display */
+    .Polaris-Card {
+      box-shadow: none !important;
+      height: 100% !important;
+    }
+  `;
 
   return (
     <Page 
-      fullWidth
+      // Remove the fullWidth prop to match other pages
       title="Quick View and Restock Inventory"
       backAction={{
         content: 'Inventory',
@@ -234,6 +451,7 @@ export default function QuickView() {
                     options={locations}
                     value={location}
                     onChange={(value: string) => setLocation(value)}
+                    disabled={showAdvanced}
                   />
                 </Box>
 
@@ -245,57 +463,70 @@ export default function QuickView() {
                     onChange={(value: string) => setSku(value)}
                     placeholder="Please provide SKU with minimum 3 characters"
                     autoComplete="off"
+                    disabled={showAdvanced}
                   />
                 </Box>
 
-                <Button variant="primary" onClick={handleSearch}>
+                <Button 
+                  onClick={handleSearch}
+                  disabled={showAdvanced}
+                >
                   Search
                 </Button>
               </InlineStack>
 
               <Box paddingBlockStart="200" paddingBlockEnd="200">
-                <Link
-                  monochrome
-                  url="#"
-                  onClick={() => setShowAdvanced((prev) => !prev)}
-                >
-                  Advanced Search
-                </Link>
+                <InlineStack gap="400" blockAlign="center" wrap>
+                  <Link
+                    monochrome
+                    url="#"
+                    onClick={() => {
+                      // Clear results when toggling between search modes
+                      setSearchResults([]);
+                      setShowAdvanced((prev) => !prev);
+                    }}
+                  >
+                    {showAdvanced ? "Basic Search" : "Advanced Search"}
+                  </Link>
+                </InlineStack>
               </Box>
 
               {showAdvanced && (
                 <Box paddingBlockEnd="200">
-                  <Text as="span" variant="headingSm">
+                  {/* Use consistent heading style */}
+                  <Text as="h2" variant="headingSm" fontWeight="semibold">
                     SKU
                   </Text>
-                  <InlineStack gap="400" wrap blockAlign="center">
-                    <Box width="180px">
-                      <Select
-                        label="SKU Condition"
-                        labelHidden
-                        options={[
-                          { label: 'Is equal to', value: 'equal' },
-                          { label: 'Contains', value: 'contains' },
-                          { label: 'Starts with', value: 'starts' },
-                        ]}
-                        value={skuCondition}
-                        onChange={(value: string) => setSkuCondition(value)}
-                      />
-                    </Box>
+                  <Box paddingBlockStart="300">
+                    <InlineStack gap="400" wrap blockAlign="start">
+                      <Box width="180px">
+                        <Select
+                          label="SKU Condition"
+                          labelHidden
+                          options={[
+                            { label: 'Is equal to', value: 'equal' },
+                            { label: 'Contains', value: 'contains' },
+                            { label: 'Starts with', value: 'starts' },
+                          ]}
+                          value={skuCondition}
+                          onChange={(value: string) => setSkuCondition(value)}
+                        />
+                      </Box>
 
-                    <Box width="300px">
-                      <TextField
-                        label="SKU Input"
-                        labelHidden
-                        placeholder="Enter SKU"
-                        autoComplete="off"
-                        value={advancedSku}
-                        onChange={(value: string) => setAdvancedSku(value)}
-                      />
-                    </Box>
+                      <Box width="300px">
+                        <TextField
+                          label="SKU Input"
+                          labelHidden
+                          placeholder="Enter SKU"
+                          autoComplete="off"
+                          value={advancedSku}
+                          onChange={(value: string) => setAdvancedSku(value)}
+                        />
+                      </Box>
 
-                    <Button variant="primary" onClick={handleAdvancedSearch}>Search</Button>
-                  </InlineStack>
+                      <Button onClick={handleAdvancedSearch}>Search</Button>
+                    </InlineStack>
+                  </Box>
                 </Box>
               )}
 
@@ -303,20 +534,27 @@ export default function QuickView() {
                 <>
                   <Divider />
                   <Box paddingBlockStart="400">
-                    <InlineStack gap="400" blockAlign="center">
+                    {/* Add heading to match SKU style */}
+                    <Box paddingBlockEnd="300">
+                      <Text as="h2" variant="headingSm" fontWeight="semibold">
+                        Restock Inventory
+                      </Text>
+                    </Box>
+                    <InlineStack gap="400" blockAlign="end" wrap={false}>
                       <Box width="200px">
                         <TextField
-                          label="Restock Quantity"
+                          label="Quantity" 
                           value={restockQty}
                           onChange={(value) => setRestockQty(value)}
                           placeholder="Enter quantity"
                           autoComplete="off"
                           type="number"
-                          min={0}
                         />
                       </Box>
-                      <Box paddingBlockStart="500">
-                        <Button variant="primary" onClick={handleUpdateInventory}>
+                      <Box>
+                        <Button
+                          onClick={handleUpdateInventory}
+                        >
                           Update Inventory
                         </Button>
                       </Box>
@@ -325,14 +563,26 @@ export default function QuickView() {
                   
                   <Box paddingBlockStart="400">
                     <Card padding="0">
-                      <DataTable
-                        columnContentTypes={['numeric', 'text', 'text', 'text']}
-                        headings={['#', 'Product', 'Inventory', 'Actions']}
-                        rows={rows}
-                        footerContent={`${searchResults.length} items found`}
-                        increasedTableDensity
-                        showTotalsInFooter={false}
-                      />
+                      <style>{tableStyles}</style>
+                      <div style={{ 
+                        border: '1px solid #DFE3E8',
+                        borderRadius: '8px',
+                        overflow: 'hidden' 
+                      }}>
+                        <DataTable
+                          columnContentTypes={['numeric', 'text', 'numeric', 'text']}
+                          headings={[
+                            <Text variant="headingSm" fontWeight="bold" as="span" key="col-num" alignment="center">#</Text>,
+                            <Text variant="headingSm" fontWeight="bold" as="span" key="col-item">Item</Text>,
+                            <Text variant="headingSm" fontWeight="bold" as="span" key="col-inv" alignment="center">Inventory</Text>,
+                            <Text variant="headingSm" fontWeight="bold" as="span" key="col-act" alignment="center">Action</Text>
+                          ]}
+                          rows={rows}
+                          footerContent={searchResults.length > 0 ? `${searchResults.length} item${searchResults.length !== 1 ? 's' : ''} found` : ''}
+                          verticalAlign="top"
+                          increasedTableDensity={false}
+                        />
+                      </div>
                     </Card>
                   </Box>
                 </>
@@ -345,8 +595,9 @@ export default function QuickView() {
       {toastActive && (
         <Toast
           content={toastContent}
-          onDismiss={toggleToastActive}
           error={toastError}
+          onDismiss={() => setToastActive(false)}
+          duration={3000}
         />
       )}
     </Page>
