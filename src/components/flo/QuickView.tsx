@@ -17,7 +17,7 @@ import {
   Toast,
   Badge,
   ButtonGroup,
-  Thumbnail, // Add this import for product images
+  Thumbnail, 
 } from '@shopify/polaris';
 import { useNavigate } from 'react-router-dom';
 
@@ -29,6 +29,50 @@ interface SearchResultItem {
   inventory: number;
   image?: string; // Add image URL property
   date?: string; // Add date property
+}
+
+// Add this sample image helper function at the top of your component
+function getSampleProductImage(productType: string): string {
+  // Collection of high-quality sample product images by category
+  const sampleImages = {
+    shoes: [
+      "https://cdn.shopify.com/s/files/1/0533/2089/files/shoes-placeholder.jpg",
+      "https://cdn.shopify.com/s/files/1/0533/2089/files/leather-boots-placeholder.jpg",
+      "https://cdn.shopify.com/s/files/1/0533/2089/files/sneakers-placeholder.jpg"
+    ],
+    electronics: [
+      "https://cdn.shopify.com/s/files/1/0533/2089/files/monitor-placeholder.jpg",
+      "https://cdn.shopify.com/s/files/1/0533/2089/files/laptop-placeholder.jpg",
+      "https://cdn.shopify.com/s/files/1/0533/2089/files/headphones-placeholder.jpg"
+    ],
+    clothing: [
+      "https://cdn.shopify.com/s/files/1/0533/2089/files/tshirt-placeholder.jpg",
+      "https://cdn.shopify.com/s/files/1/0533/2089/files/jacket-placeholder.jpg",
+      "https://cdn.shopify.com/s/files/1/0533/2089/files/dress-placeholder.jpg"
+    ],
+    default: [
+      "https://burst.shopifycdn.com/photos/black-leather-choker-necklace_373x@2x.jpg",
+      "https://burst.shopifycdn.com/photos/tucan-scarf_373x@2x.jpg",
+      "https://burst.shopifycdn.com/photos/facial-green-clay-mask_373x@2x.jpg",
+      "https://burst.shopifycdn.com/photos/blue-t-shirt_373x@2x.jpg",
+      "https://burst.shopifycdn.com/photos/wooden-watch-in-box_373x@2x.jpg",
+      "https://burst.shopifycdn.com/photos/blue-striped-shirt_373x@2x.jpg",
+      "https://burst.shopifycdn.com/photos/coffee-in-white-mug_373x@2x.jpg"
+    ]
+  };
+
+  // Determine product type from the title or return default
+  const title = productType.toLowerCase();
+  if (title.includes('shoe') || title.includes('boot') || title.includes('stivali')) {
+    return sampleImages.shoes[Math.floor(Math.random() * sampleImages.shoes.length)];
+  } else if (title.includes('monitor') || title.includes('samsung') || title.includes('keyboard')) {
+    return sampleImages.electronics[Math.floor(Math.random() * sampleImages.electronics.length)];
+  } else if (title.includes('shirt') || title.includes('jacket') || title.includes('dress')) {
+    return sampleImages.clothing[Math.floor(Math.random() * sampleImages.clothing.length)];
+  }
+  
+  // Default case - random product image
+  return sampleImages.default[Math.floor(Math.random() * sampleImages.default.length)];
 }
 
 export default function QuickView() {
@@ -83,10 +127,10 @@ export default function QuickView() {
           {
             shopifyId: '9646363279652',
             variantId: '49865314894116',
-            sku: '_CAMOSCIO_EBANO_374_ROT_NOCE+NERO39',
-            title: 'Stivali Texani in Camoscio Stivali Texani Stivali Texani in Camoscio Stivali Texani in Camosc Victoria  tivali Texani in Camoscio Victoria- EBANO / 39',
+            sku: 'ABC123',
+            title: 'Stivali Texani in Camoscio Victoria - EBANO / 39',
             inventory: 0,
-            image: 'https://cdn.shopify.com/s/files/1/0012/3456/7894/products/shoe-sample.jpg',
+            image: "https://burst.shopifycdn.com/photos/leather-boots-with-yellow-laces_373x@2x.jpg",
             date: '2025-05-20',
           },
         ]);
@@ -102,34 +146,52 @@ export default function QuickView() {
         return;
       }
 
-      // Mock data with added image and date properties
+      // Mock data with realistic images
       const mockProducts = [
         {
           shopifyId: '9646363279652',
           variantId: '49865314894116',
-          sku: 'M302_CAMOSCIO_EBANO_374_ROT_NOCE+NERO39',
-          title: 'Stivali Texani Stivali Texani in Camoscio Victoria - EBANO / 39 in Camoscio Victoria - EBANO / 39',
+          sku: 'ABC123',
+          title: 'Stivali Texani in Camoscio Victoria - EBANO / 39',
           inventory: 5,
-          image: 'https://cdn.shopify.com/s/files/1/0012/3456/7894/products/shoe-sample.jpg',
+          image: "https://burst.shopifycdn.com/photos/leather-boots-with-yellow-laces_373x@2x.jpg",
           date: '2025-05-20',
         },
         {
           shopifyId: '8011199873176',
           variantId: '43120834511000',
           sku: 'ABC456',
-          title: 'MSAMSUNG 32-inch S3 (S39GD) FHD 2025',
+          title: 'SAMSUNG 32-inch S3 (S39GD) FHD 2025',
           inventory: 10,
-          image: 'https://cdn.shopify.com/s/files/1/0012/3456/7894/products/monitor.jpg',
+          image: "https://burst.shopifycdn.com/photos/widescreen-monitor_373x@2x.jpg",
           date: '2025-05-22',
         },
         {
           shopifyId: '8011199873177',
           variantId: '43120834511001',
-          sku: 'XYZ123',
+          sku: 'ABC789',
           title: 'K380 多工藍牙鍵盤 - 白色',
           inventory: 15,
-          image: 'https://cdn.shopify.com/s/files/1/0012/3456/7894/products/keyboard.jpg',
+          image: "https://burst.shopifycdn.com/photos/white-keyboard-top-down_373x@2x.jpg",
           date: '2025-05-19',
+        },
+        {
+          shopifyId: '8011199873178',
+          variantId: '43120834511002',
+          sku: 'ABC321',
+          title: 'Organic Cotton T-Shirt - Blue / XL',
+          inventory: 8,
+          image: "https://burst.shopifycdn.com/photos/blue-t-shirt_373x@2x.jpg",
+          date: '2025-05-18',
+        },
+        {
+          shopifyId: '8011199873179',
+          variantId: '43120834511003',
+          sku: 'ABC654',
+          title: 'Bamboo Water Bottle 750ml',
+          inventory: 0,
+          image: "https://burst.shopifycdn.com/photos/water-bottle-in-hand_373x@2x.jpg",
+          date: '2025-05-17',
         }
       ];
 
@@ -193,174 +255,143 @@ export default function QuickView() {
     setRestockQty(''); // Clear the input field after update
   };
 
-  // Create a formatted row for each search result
+  // Create a formatted row for each search result with Shopify Admin-like styling
   const rows = searchResults.map((item, index) => [
     // Row number column
     <Box padding="300" key={`num-${item.variantId}`}>
-      <div style={{ 
-        paddingTop: "8px",
-        textAlign: "center"
-      }}>
-        <Text as="span" variant="bodyMd" fontWeight="medium">
+      <div style={{ textAlign: "center" }}>
+        <Text as="span" variant="bodySm" tone="subdued">
           {index + 1}
         </Text>
       </div>
     </Box>,
     
-    // Product column with proper structured display to match image
+    // Product column (unchanged)
     <Box padding="300" key={`product-${item.variantId}`} width="100%">
-      <Card padding="300">
+      <InlineStack gap="400" wrap={false} align="start">
+        {/* Enhanced Product thumbnail with better shadow and scaling */}
+        <div style={{ 
+          width: "70px",
+          height: "70px",
+          borderRadius: "8px",
+          overflow: "hidden",
+          border: "1px solid rgba(225, 227, 229, 0.6)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#F9FAFB",
+          boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.05)",
+          position: "relative"
+        }}>
+          {item.image ? (
+            <img 
+              src={item.image} 
+              alt={item.title}
+              style={{ 
+                width: "100%", 
+                height: "100%", 
+                objectFit: "cover",
+                objectPosition: "center",
+              }} 
+              onError={(e) => {
+                // More robust fallback for images that fail to load
+                console.log(`Image failed to load for ${item.title}, using fallback`);
+                const target = e.target as HTMLImageElement;
+                // First try category-specific image
+                target.src = getSampleProductImage(item.title);
+                // If that fails too, set a generic fallback
+                target.onerror = () => {
+                  target.src = "https://burst.shopifycdn.com/photos/white-box-on-white_373x@2x.jpg";
+                  // Prevent infinite error loop
+                  target.onerror = null;
+                };
+              }}
+            />
+          ) : (
+            // For items without images, immediately use the smart fallback system
+            <img 
+              src={getSampleProductImage(item.title)}
+              alt={item.title}
+              style={{ 
+                width: "100%", 
+                height: "100%", 
+                objectFit: "cover" 
+              }} 
+              onError={(e) => {
+                // If category matching fails, use a generic product placeholder
+                const target = e.target as HTMLImageElement;
+                target.src = "https://burst.shopifycdn.com/photos/white-box-on-white_373x@2x.jpg";
+                target.onerror = null;
+              }}
+            />
+          )}
+        </div>
+        
+        {/* Product details */}
         <BlockStack gap="100">
-          {/* Product title with blue highlight and improved wrapping */}
-          <div style={{ 
-            fontWeight: "500", 
-            fontSize: "16px",
-            color: "#2C6ECB",
-            marginBottom: "8px",
-            wordBreak: "break-word", // Allow wrapping for long titles
-            lineHeight: "1.4", // Improve line height for wrapped text
-            maxHeight: "none", // Remove any max height that might be causing truncation
-            overflow: "visible", // Ensure content isn't hidden
-            whiteSpace: "normal", // Allow text to wrap normally
-            display: "block" // Make sure it's displayed as a block
-          }}>
+          {/* Product title */}
+          <Text as="h3" variant="bodyMd" fontWeight="semibold" truncate>
             {item.title}
-          </div>
+          </Text>
           
-          {/* Product details in table-like format as shown in the image */}
-          <div style={{ 
-            display: "table",
-            width: "100%",
-            borderCollapse: "collapse",
-            fontSize: "13px",
-            tableLayout: "fixed" // Force table to respect column widths
-          }}>
-            {/* Shopify ID row */}
-            <div style={{ display: "table-row" }}>
-              <div style={{ 
-                display: "table-cell", 
-                padding: "4px 8px 4px 0", 
-                whiteSpace: "nowrap",
-                width: "80px",
-                color: "#6D7175",
-                verticalAlign: "top"
-              }}>
-                Shopify ID
-              </div>
-              <div style={{ 
-                display: "table-cell", 
-                padding: "4px 0", 
-                color: "#202223",
-                fontWeight: "normal",
-                wordBreak: "break-all" // Allow wrapping for long IDs
-              }}>
-                {item.shopifyId}
-              </div>
-            </div>
-            
-            {/* Variant ID row */}
-            <div style={{ display: "table-row" }}>
-              <div style={{ 
-                display: "table-cell", 
-                padding: "4px 8px 4px 0", 
-                whiteSpace: "nowrap",
-                color: "#6D7175",
-                verticalAlign: "top"
-              }}>
-                Variant ID
-              </div>
-              <div style={{ 
-                display: "table-cell", 
-                padding: "4px 0", 
-                color: "#202223",
-                fontWeight: "normal",
-                wordBreak: "break-all" // Allow wrapping for long IDs
-              }}>
-                {item.variantId}
-              </div>
-            </div>
-            
-            {/* SKU row */}
-            <div style={{ display: "table-row" }}>
-              <div style={{ 
-                display: "table-cell", 
-                padding: "4px 8px 4px 0", 
-                whiteSpace: "nowrap",
-                width: "80px",
-                color: "#6D7175",
-                verticalAlign: "top"
-              }}>
-                SKU
-              </div>
-              <div style={{ 
-                display: "table-cell", 
-                padding: "4px 0", 
-                color: "#202223",
-                fontWeight: "normal",
-                wordBreak: "break-all", // Allow SKUs to wrap if very long
-                whiteSpace: "normal", // Allow text to wrap naturally
-                maxHeight: "none", // Remove any height limitation
-                overflow: "visible", // Ensure content isn't hidden
-                lineHeight: "1.4" // Improve readability of wrapped text
-              }}>
-                {item.sku}
-              </div>
-            </div>
-          </div>
+          {/* Product metadata */}
+          <InlineStack gap="400" wrap={true}>
+            <Text as="span" variant="bodySm" tone="subdued">
+              SKU: {item.sku}
+            </Text>
+            <Text as="span" variant="bodySm" tone="subdued">
+              ID: {item.shopifyId}
+            </Text>
+            {item.date && (
+              <Text as="span" variant="bodySm" tone="subdued">
+                Updated: {item.date}
+              </Text>
+            )}
+          </InlineStack>
         </BlockStack>
-      </Card>
+      </InlineStack>
     </Box>,
     
-    // Inventory column
+    // Updated inventory column - simple number display
     <Box padding="300" key={`inventory-${item.variantId}`}>
-      <div style={{ 
-        textAlign: "center",
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        paddingTop: "8px"
-      }}>
-        <Text as="span" variant="bodyMd" fontWeight="medium">
-          {item.inventory.toString()}
+      <div style={{ textAlign: "center" }}>
+        <Text 
+          as="span" 
+          variant="bodyMd"
+          tone={item.inventory > 0 ? undefined : "critical"}
+          fontWeight="semibold"
+        >
+          {item.inventory}
         </Text>
       </div>
     </Box>,
     
-    // Action buttons
+    // Action buttons matching Shopify's style from the image
     <Box padding="300" key={`actions-${item.variantId}`}>
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "center", 
-        alignItems: "center", 
-        height: "100%",
-        paddingTop: "8px"
-      }}>
-        <ButtonGroup variant="segmented">
-          <Button 
-            size="slim"
-            onClick={() => {
-              window.open(`https://admin.shopify.com/store/your-store/products/${item.shopifyId}`, '_blank');
-            }}
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <InlineStack gap="400">
+          <Link 
+            url={`https://admin.shopify.com/store/your-store/products/${item.shopifyId}`}
+            external={true}
+            monochrome
           >
             View
-          </Button>
-          <Button 
-            size="slim"
-            onClick={() => {
-              window.open(`https://admin.shopify.com/store/your-store/products/${item.shopifyId}/edit`, '_blank');
-            }}
+          </Link>
+          <Link 
+            url={`https://admin.shopify.com/store/your-store/products/${item.shopifyId}/edit`}
+            external={true}
+            monochrome
           >
             Edit
-          </Button>
-        </ButtonGroup>
+          </Link>
+        </InlineStack>
       </div>
     </Box>
   ]);
 
-  // Update your tableStyles with fixed widths for columns
+  // Update your tableStyles to match Shopify Admin
   const tableStyles = `
-    /* Force full-width table */
+    /* Global table styling */
     .Polaris-DataTable {
       width: 100% !important;
     }
@@ -368,71 +399,76 @@ export default function QuickView() {
     .Polaris-DataTable__Table {
       width: 100% !important;
       table-layout: fixed !important;
-      border-collapse: collapse !important;
+      border-collapse: separate !important;
       border-spacing: 0 !important;
     }
     
-    /* Fixed column widths */
+    /* Column widths */
     .Polaris-DataTable__Cell:nth-child(1),
     .Polaris-DataTable__Cell--header:nth-child(1) {
-      width: 50px !important;
-      min-width: 50px !important;
-      max-width: 50px !important;
-      padding-right: 0 !important;
+      width: 40px !important;
+      min-width: 40px !important;
+      max-width: 40px !important;
     }
     
     .Polaris-DataTable__Cell:nth-child(2),
     .Polaris-DataTable__Cell--header:nth-child(2) {
-      width: calc(100% - 240px) !important;
+      width: auto !important;
       min-width: 350px !important;
-      padding-right: 8px !important;
     }
     
     .Polaris-DataTable__Cell:nth-child(3),
     .Polaris-DataTable__Cell--header:nth-child(3) {
-      width: 80px !important;
-      min-width: 80px !important;
-      max-width: 80px !important;
-      padding-left: 0 !important;
-      padding-right: 0 !important;
+      width: 120px !important;
+      min-width: 120px !important;
       text-align: center !important;
-      vertical-align: middle !important;
     }
     
     .Polaris-DataTable__Cell:nth-child(4),
     .Polaris-DataTable__Cell--header:nth-child(4) {
-      width: 110px !important;
-      min-width: 110px !important;
-      max-width: 110px !important;
-      padding-left: 0 !important;
-      text-align: center !important;
+      width: 120px !important;
+      min-width: 120px !important;
+      text-align: right !important;
     }
     
-    /* Consistent cell height for better layout with images */
+    /* Row styling */
+    .Polaris-DataTable__Row {
+      cursor: pointer !important;
+    }
+    
+    .Polaris-DataTable__Row:hover td {
+      background-color: rgba(180, 188, 199, 0.1) !important;
+    }
+    
+    /* Cell styling */
     .Polaris-DataTable__Cell {
-      border: none !important;
+      padding: 12px !important;
       border-bottom: 1px solid #E1E3E5 !important;
+      background-color: #ffffff !important;
       vertical-align: middle !important;
-      height: 120px !important; /* Increased height to accommodate image cards */
     }
     
-    /* Special styling for header cells */
+    /* Header styling */
     .Polaris-DataTable__Cell--header {
-      border-bottom: 2px solid #E1E3E5 !important;
-      background-color: #F9FAFB;
-      height: auto !important;
+      padding: 16px 12px !important;
+      background-color: #F9FAFB !important;
+      border-bottom: 1px solid #C9CCCF !important;
+      font-weight: 600 !important;
     }
     
-    /* Improve card display */
-    .Polaris-Card {
-      box-shadow: none !important;
-      height: 100% !important;
+    /* Footer styling */
+    .Polaris-DataTable__Footer {
+      background-color: #F9FAFB !important;
+      padding: 12px !important;
+      border-top: 1px solid #E1E3E5 !important;
+      font-size: 13px !important;
+      color: #637381 !important;
     }
   `;
 
   return (
     <Page 
-      // Remove the fullWidth prop to match other pages
+      fullWidth
       title="Quick View and Restock Inventory"
       backAction={{
         content: 'Inventory',
@@ -534,7 +570,6 @@ export default function QuickView() {
                 <>
                   <Divider />
                   <Box paddingBlockStart="400">
-                    {/* Add heading to match SKU style */}
                     <Box paddingBlockEnd="300">
                       <Text as="h2" variant="headingSm" fontWeight="semibold">
                         Restock Inventory
@@ -565,22 +600,24 @@ export default function QuickView() {
                     <Card padding="0">
                       <style>{tableStyles}</style>
                       <div style={{ 
-                        border: '1px solid #DFE3E8',
                         borderRadius: '8px',
-                        overflow: 'hidden' 
+                        overflow: 'hidden',
+                        width: '100%',
+                        boxShadow: '0px 1px 3px rgba(63, 63, 68, 0.15)'
                       }}>
                         <DataTable
-                          columnContentTypes={['numeric', 'text', 'numeric', 'text']}
+                          columnContentTypes={['numeric', 'text', 'text', 'text']}
                           headings={[
-                            <Text variant="headingSm" fontWeight="bold" as="span" key="col-num" alignment="center">#</Text>,
-                            <Text variant="headingSm" fontWeight="bold" as="span" key="col-item">Item</Text>,
-                            <Text variant="headingSm" fontWeight="bold" as="span" key="col-inv" alignment="center">Inventory</Text>,
-                            <Text variant="headingSm" fontWeight="bold" as="span" key="col-act" alignment="center">Action</Text>
+                            <Text variant="bodySm" as="span" key="col-num" alignment="center">#</Text>,
+                            <Text variant="bodySm" as="span" key="col-item" alignment="start">Product</Text>,
+                            <Text variant="bodySm" as="span" key="col-inv" alignment="center">Inventory</Text>,
+                            <Text variant="bodySm" as="span" key="col-act" alignment="start">Action</Text>
                           ]}
                           rows={rows}
-                          footerContent={searchResults.length > 0 ? `${searchResults.length} item${searchResults.length !== 1 ? 's' : ''} found` : ''}
-                          verticalAlign="top"
+                          footerContent={searchResults.length > 0 ? `${searchResults.length} product${searchResults.length !== 1 ? 's' : ''} found` : ''}
+                          verticalAlign="middle"
                           increasedTableDensity={false}
+                          hoverable={true}
                         />
                       </div>
                     </Card>
@@ -590,6 +627,9 @@ export default function QuickView() {
             </FormLayout>
           </Box>
         </Card>
+        
+        {/* Add bottom spacing div to match Shopify's admin UI */}
+        <div style={{ height: '48px' }}></div>
       </BlockStack>
 
       {toastActive && (
