@@ -28,7 +28,6 @@ import DualPlans from './components/dual/Plans';
 import DualSupport from './components/dual/Support';
 import FloHome from './components/flo/Home';
 import FloPlans from './components/flo/Plans'; // Change from dual to flo
-import FloSettings from './components/flo/Settings';
 import FloAccounts from './components/flo/Accounts';
 import FloSupport from './components/flo/Support'; 
 import FloHistory from './components/flo/History';

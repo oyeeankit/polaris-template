@@ -82,7 +82,7 @@ const Home: React.FC = () => {
 
   return (
     <Page>
-      <BlockStack gap="400">
+      <BlockStack gap="500"> {/* Changed from 400 to 500 to match Shopify spacing */}
         {/* App Title */}
         <Box paddingBlockEnd="400">
           <Text as="h1" variant="headingLg" fontWeight="bold">
@@ -211,6 +211,11 @@ const Home: React.FC = () => {
             )}
           </BlockStack>
         </Card>
+        
+        {/* Add bottom spacing to match Shopify admin UI */}
+        <Box paddingBlockEnd="600">
+          {/* This provides the standard 24px bottom spacing using Polaris tokens */}
+        </Box>
       </BlockStack>
 
       {/* Toast Message */}

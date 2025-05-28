@@ -111,7 +111,7 @@ const ContactSupport: React.FC = () => {
       subtitle="We're here to help you succeed with our app"
       fullWidth
     >
-      <BlockStack gap="800">
+      <BlockStack gap="500"> {/* Changed from 800 to 500 to match other pages */}
         <Banner
           title="Need help?"
           tone="info"
@@ -121,6 +121,7 @@ const ContactSupport: React.FC = () => {
         <InlineGrid columns={{ xs: 1, sm: 1, md: 3 }} gap="500">
           {supportOptions.map((option, index) => (
             <Card key={index} padding="0">
+              {/* Existing card content */}
               <div style={{ height: '100%' }}>
                 <Box 
                   borderColor="border" 
@@ -131,7 +132,7 @@ const ContactSupport: React.FC = () => {
                   <BlockStack gap="400">
                     <Box padding="500" paddingBlockEnd="400">
                       <BlockStack gap="300">
-                        {/* Icon and title on the same line */}
+                        {/* Icon and title content */}
                         <div style={{ display: "flex", alignItems: "center", gap: "var(--p-space-300)" }}>
                           <div
                             style={{
@@ -162,7 +163,7 @@ const ContactSupport: React.FC = () => {
                     </Box>
                     
                     <Box padding="500" paddingBlockStart="0" paddingBlockEnd="400">
-                      {/* Button with auto width and left alignment */}
+                      {/* Button content */}
                       <div style={{ display: "flex", justifyContent: "flex-start" }}>
                         <Button
                           onClick={option.action.onAction}
@@ -180,6 +181,12 @@ const ContactSupport: React.FC = () => {
         </InlineGrid>
 
         <Divider />
+        
+       
+        {/* Add bottom spacing to match Shopify admin UI */}
+        <Box paddingBlockEnd="600">
+          {/* This provides the standard 24px bottom spacing using Polaris tokens */}
+        </Box>
       </BlockStack>
     </Page>
   );

@@ -254,7 +254,15 @@ const Accounts: React.FC = () => {
               </Box>
             </Card>
           </Layout.Section>
+          
+          {/* Add bottom spacing to match Shopify admin UI */}
+          <Layout.Section>
+            <Box paddingBlockEnd="600">
+              {/* This provides the standard 24px bottom spacing using Polaris tokens */}
+            </Box>
+          </Layout.Section>
         </Layout>
+        
         {showToast && (
           <Toast content={toastMessage} onDismiss={dismissToast} duration={4000} />
         )}

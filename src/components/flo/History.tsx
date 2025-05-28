@@ -190,8 +190,11 @@ export default function FloHistory() {
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   return (
-    <Page fullWidth title="History">
-      <BlockStack gap="400">
+    <Page 
+      fullWidth 
+      title="History"
+    >
+      <BlockStack gap="500"> {/* Using space-500 (20px) for spacing between cards */}
         <Card>
           <BlockStack gap="0">
             <Box background="bg-fill-secondary" padding="400" borderRadius="200">
@@ -429,6 +432,11 @@ export default function FloHistory() {
             </Box>
           </BlockStack>
         </Card>
+        
+        {/* Bottom spacing using Polaris tokens instead of arbitrary pixel value */}
+        <Box paddingBlockEnd="600">
+          {/* This empty Box provides the standard bottom spacing of 24px */}
+        </Box>
       </BlockStack>
     </Page>
   );
