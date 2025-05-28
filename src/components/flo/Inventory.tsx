@@ -45,35 +45,42 @@ export default function FlowInventory() {
 
   return (
     <Page>
-      {/* Heading */}
-      <Box padding="400">
-        <Text as="h1" variant="headingLg" fontWeight="bold">
-          Inventory Overview
-        </Text>
-      </Box>
+      <BlockStack gap="500"> {/* Added BlockStack with gap="500" to match other pages */}
+        {/* Heading */}
+        <Box paddingBlockEnd="400">
+          <Text as="h1" variant="headingLg" fontWeight="bold">
+            Inventory Overview
+          </Text>
+        </Box>
 
-      {/* Card Row */}
-      <Box paddingInline="400">
-        <div
-          style={{
-            display: 'flex',
-            gap: '16px',
-            flexWrap: 'wrap',
-            justifyContent: 'flex-start'
-          }}
-        >
-          <ClickableCard
-            title="Quick View"
-            description="Get a quick overview of your inventory status."
-            onClick={() => navigate('/flo/inventory-quick-view')}
-          />
-          <ClickableCard
-            title="Detail View"
-            description="Access detailed inventory information and analytics."
-            onClick={() => navigate('/flo/inventory-detail-view')}
-          />
-        </div>
-      </Box>
+        {/* Card Row */}
+        <Box>
+          <div
+            style={{
+              display: 'flex',
+              gap: '16px',
+              flexWrap: 'wrap',
+              justifyContent: 'flex-start'
+            }}
+          >
+            <ClickableCard
+              title="Quick View"
+              description="Get a quick overview of your inventory status."
+              onClick={() => navigate('/flo/inventory-quick-view')}
+            />
+            <ClickableCard
+              title="Detail View"
+              description="Access detailed inventory information and analytics."
+              onClick={() => navigate('/flo/inventory-detail-view')}
+            />
+          </div>
+        </Box>
+        
+        {/* Add bottom spacing to match Shopify admin UI */}
+        <Box paddingBlockEnd="600">
+          {/* This provides the standard 24px bottom spacing using Polaris tokens */}
+        </Box>
+      </BlockStack>
     </Page>
   );
 }

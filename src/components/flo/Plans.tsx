@@ -109,7 +109,7 @@ const Plans: React.FC = () => {
       subtitle="Choose the plan that best fits your business needs"
       fullWidth
     >
-      <BlockStack gap="800">
+      <BlockStack gap="500"> {/* Changed from 800 to 500 to match other pages */}
         {/* Demo controls - remove in production */}
         <Box padding="400" background="bg-surface-secondary" borderRadius="300">
           <BlockStack gap="300">
@@ -137,65 +137,91 @@ const Plans: React.FC = () => {
           </BlockStack>
         </Box>
         
-        <InlineGrid columns={{ xs: 1, sm: 1, md: 2 }} gap="500">
-          {plans.map((plan, index) => (
-            <Card key={index} padding="500">
-              <BlockStack gap="400">
-                <Box paddingBlockEnd="400">
-                  <BlockStack gap="200">
-                    <Text as="h2" variant="headingLg" fontWeight="semibold" alignment="center">
-                      {plan.name}
-                    </Text>
-                    <Text as="p" variant="bodySm" tone="subdued" alignment="center">
-                      Monthly billing
-                    </Text>
-                    <Text as="p" variant="headingXl" fontWeight="bold" alignment="center">
-                      {plan.price}
-                      <Text as="span" variant="bodyMd">/month</Text>
-                    </Text>
+        <div style={{ maxWidth: "800px", marginLeft: "0", marginRight: "auto" }}>
+          <InlineGrid columns={{ xs: 1, sm: 1, md: 2 }} gap="500">
+            {plans.map((plan, index) => (
+              <div key={index} style={{ position: "relative", maxWidth: "350px" }}>
+                {!plan.isCurrentPlan && (
+                  <div style={{
+                    position: "absolute",
+                    top: "-10px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    backgroundColor: "#2C6ECB",
+                    color: "white",
+                    padding: "4px 12px",
+                    borderRadius: "12px",
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    zIndex: 1
+                  }}>
+                    Most Popular
+                  </div>
+                )}
+                <Card padding="500">
+                  <BlockStack gap="400">
+                    <Box paddingBlockEnd="400">
+                      <BlockStack gap="200">
+                        <Text as="h2" variant="headingLg" fontWeight="semibold" alignment="center">
+                          {plan.name}
+                        </Text>
+                        <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                          Monthly billing
+                        </Text>
+                        <Text as="p" variant="headingXl" fontWeight="bold" alignment="center">
+                          {plan.price}
+                          <Text as="span" variant="bodyMd">/month</Text>
+                        </Text>
+                      </BlockStack>
+                    </Box>
+
+                    <Divider />
+
+                    <BlockStack gap="300">
+                      {plan.features.map((feature, featureIndex) => (
+                        <div key={featureIndex} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ 
+                            width: '24px', 
+                            height: '24px', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center' 
+                          }}>
+                            <Icon
+                              source={feature.included ? CheckIcon : ChannelsIcon}
+                              tone={feature.included ? 'success' : 'critical'}
+                            />
+                          </div>
+                          <Text as="span" variant="bodyMd" 
+                            tone={feature.included ? undefined : 'subdued'} 
+                            textDecorationLine={feature.included ? undefined : 'line-through'}>
+                            {feature.name}
+                          </Text>
+                        </div>
+                      ))}
+                    </BlockStack>
+
+                    <Box paddingBlockStart="400">
+                      <Button
+                        variant={plan.isCurrentPlan ? "primary" : "primary"}
+                        tone={plan.isCurrentPlan ? "success" : undefined}
+                        disabled={plan.isCurrentPlan}
+                        fullWidth
+                      >
+                        {plan.isCurrentPlan ? 'Current Plan' : `Upgrade to ${plan.name}`}
+                      </Button>
+                    </Box>
                   </BlockStack>
-                </Box>
-
-                <Divider />
-
-                <BlockStack gap="300">
-                  {plan.features.map((feature, featureIndex) => (
-                    <div key={featureIndex} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ 
-                        width: '24px', 
-                        height: '24px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center' 
-                      }}>
-                        <Icon
-                          source={feature.included ? CheckIcon : ChannelsIcon}
-                          tone={feature.included ? 'success' : 'critical'}
-                        />
-                      </div>
-                      <Text as="span" variant="bodyMd" 
-                        tone={feature.included ? undefined : 'subdued'} 
-                        textDecorationLine={feature.included ? undefined : 'line-through'}>
-                        {feature.name}
-                      </Text>
-                    </div>
-                  ))}
-                </BlockStack>
-
-                <Box paddingBlockStart="400">
-                  <Button
-                    variant={plan.isCurrentPlan ? "primary" : "secondary"}
-                    tone={plan.isCurrentPlan ? "success" : undefined}
-                    disabled={plan.isCurrentPlan}
-                    fullWidth
-                  >
-                    {plan.isCurrentPlan ? 'Current Plan' : `Switch to ${plan.name}`}
-                  </Button>
-                </Box>
-              </BlockStack>
-            </Card>
-          ))}
-        </InlineGrid>
+                </Card>
+              </div>
+            ))}
+          </InlineGrid>
+        </div>
+        
+        {/* Add bottom spacing to match Shopify admin UI */}
+        <Box paddingBlockEnd="600">
+          {/* This provides the standard 24px bottom spacing using Polaris tokens */}
+        </Box>
       </BlockStack>
     </Page>
   );

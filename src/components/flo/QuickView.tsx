@@ -152,7 +152,7 @@ export default function QuickView() {
           shopifyId: '9646363279652',
           variantId: '49865314894116',
           sku: 'ABC123',
-          title: 'Stivali Texani in Camoscio Victoria - EBANO / 39',
+          title: 'T TICCI Pickleball Paddles Set of 2, USAPA Approved Fiberglass Pickle Ball Paddles with 4 Pickleballs, Lightweight Rackets for Adults & Kids, Includes Carry Bag & Net Bag for Men, Women, Beginners,',
           inventory: 5,
           image: "https://burst.shopifycdn.com/photos/leather-boots-with-yellow-laces_373x@2x.jpg",
           date: '2025-05-20',
@@ -236,21 +236,21 @@ export default function QuickView() {
       return;
     }
 
-    // Convert to number once for reuse
+    // Convert to number for calculation
     const newQuantity = Number(restockQty);
-
+    
+    // Allow negative inventory (if user specifically enters a negative value)
     const updatedResults = searchResults.map(item => {
-      // Set inventory directly to the value entered by the user
       return {
         ...item,
-        inventory: newQuantity,
+        inventory: newQuantity, // Set inventory directly to the entered value
       };
     });
     
     setSearchResults(updatedResults);
     
-    // Update the toast message to reflect direct replacement
-    showToast(`Inventory updated to ${newQuantity}`, false);
+    // Update toast message to reflect the action
+    showToast(`Set inventory to ${newQuantity}`, false);
     
     setRestockQty(''); // Clear the input field after update
   };
@@ -266,103 +266,61 @@ export default function QuickView() {
       </div>
     </Box>,
     
-    // Product column (unchanged)
+    // Product column (without image)
     <Box padding="300" key={`product-${item.variantId}`} width="100%">
-      <InlineStack gap="400" wrap={false} align="start">
-        {/* Enhanced Product thumbnail with better shadow and scaling */}
+      <BlockStack gap="200">
+        {/* Product title - Show full title with proper line breaks and make clickable */}
         <div style={{ 
-          width: "70px",
-          height: "70px",
-          borderRadius: "8px",
+          maxWidth: "350px",
+          width: "100%", 
+          position: "relative",
           overflow: "hidden",
-          border: "1px solid rgba(225, 227, 229, 0.6)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#F9FAFB",
-          boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.05)",
-          position: "relative"
+          maxHeight: "none", // Remove height restriction
+          display: "block",
+          whiteSpace: "normal"
         }}>
-          {item.image ? (
-            <img 
-              src={item.image} 
-              alt={item.title}
-              style={{ 
-                width: "100%", 
-                height: "100%", 
-                objectFit: "cover",
-                objectPosition: "center",
-              }} 
-              onError={(e) => {
-                // More robust fallback for images that fail to load
-                console.log(`Image failed to load for ${item.title}, using fallback`);
-                const target = e.target as HTMLImageElement;
-                // First try category-specific image
-                target.src = getSampleProductImage(item.title);
-                // If that fails too, set a generic fallback
-                target.onerror = () => {
-                  target.src = "https://burst.shopifycdn.com/photos/white-box-on-white_373x@2x.jpg";
-                  // Prevent infinite error loop
-                  target.onerror = null;
-                };
-              }}
-            />
-          ) : (
-            // For items without images, immediately use the smart fallback system
-            <img 
-              src={getSampleProductImage(item.title)}
-              alt={item.title}
-              style={{ 
-                width: "100%", 
-                height: "100%", 
-                objectFit: "cover" 
-              }} 
-              onError={(e) => {
-                // If category matching fails, use a generic product placeholder
-                const target = e.target as HTMLImageElement;
-                target.src = "https://burst.shopifycdn.com/photos/white-box-on-white_373x@2x.jpg";
-                target.onerror = null;
-              }}
-            />
-          )}
+          <Link
+            url={`https://admin.shopify.com/store/your-store/products/${item.shopifyId}`}
+            external={true}
+            removeUnderline
+          >
+            <Text as="h3" variant="bodyMd" fontWeight="semibold">
+              {/* Show full title */}
+              {item.title}
+            </Text>
+          </Link>
         </div>
         
-        {/* Product details */}
-        <BlockStack gap="100">
-          {/* Product title */}
-          <Text as="h3" variant="bodyMd" fontWeight="semibold" truncate>
-            {item.title}
+        {/* Product metadata - increased gap between title and metadata */}
+        <InlineStack gap="400" wrap={true}>
+          <Text as="span" variant="bodySm" tone="subdued">
+            SKU: {item.sku}
           </Text>
-          
-          {/* Product metadata */}
-          <InlineStack gap="400" wrap={true}>
-            <Text as="span" variant="bodySm" tone="subdued">
-              SKU: {item.sku}
-            </Text>
-            <Text as="span" variant="bodySm" tone="subdued">
-              ID: {item.shopifyId}
-            </Text>
-            {item.date && (
-              <Text as="span" variant="bodySm" tone="subdued">
-                Updated: {item.date}
-              </Text>
-            )}
-          </InlineStack>
-        </BlockStack>
-      </InlineStack>
+          <Text as="span" variant="bodySm" tone="subdued">
+            Shopify ID: {item.shopifyId}
+          </Text>
+          <Text as="span" variant="bodySm" tone="subdued">
+            Variant ID: {item.variantId}
+          </Text>
+        </InlineStack>
+      </BlockStack>
     </Box>,
     
-    // Updated inventory column - simple number display
+    // Updated inventory column - matching Shopify admin's stock level formatting
     <Box padding="300" key={`inventory-${item.variantId}`}>
-      <div style={{ textAlign: "center" }}>
-        <Text 
-          as="span" 
-          variant="bodyMd"
-          tone={item.inventory > 0 ? undefined : "critical"}
-          fontWeight="semibold"
-        >
-          {item.inventory}
-        </Text>
+      <div style={{ 
+        textAlign: "left",
+        paddingLeft: "16px"
+      }}>
+        {item.inventory <= 9 ? (
+          <Text as="span" variant="bodySm" tone="critical">
+            {item.inventory} in stock
+          </Text>
+        ) : (
+          <Text as="span" variant="bodySm">
+            {item.inventory} in stock
+          </Text>
+        )}
       </div>
     </Box>,
     
@@ -475,9 +433,9 @@ export default function QuickView() {
         onAction: () => navigate('/flo/inventory')
       }}
     >
-      <BlockStack gap="400">
+      <BlockStack gap="500"> {/* space-500 (20px) for spacing between cards */}
         <Card>
-          <Box padding="400">
+          <Box padding="400"> {/* space-400 (16px) for card padding */}
             <FormLayout>
               <InlineStack gap="400" wrap blockAlign="center">
                 <Box width="300px">
@@ -628,8 +586,10 @@ export default function QuickView() {
           </Box>
         </Card>
         
-        {/* Add bottom spacing div to match Shopify's admin UI */}
-        <div style={{ height: '48px' }}></div>
+        {/* Using Polaris Box with standard token instead of arbitrary pixel height */}
+        <Box paddingBlockEnd="600">
+          {/* This provides the standard 24px bottom spacing */}
+        </Box>
       </BlockStack>
 
       {toastActive && (
