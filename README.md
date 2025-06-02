@@ -1,1 +1,1 @@
-Just for reference for frontend team
+Just for reference
