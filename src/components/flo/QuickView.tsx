@@ -350,11 +350,14 @@ export default function QuickView() {
     </Box>
   ]);
 
-  // Update your tableStyles to match Shopify Admin
+  // Update your tableStyles to match Shopify Admin with the same border styling
   const tableStyles = `
     /* Global table styling */
     .Polaris-DataTable {
       width: 100% !important;
+      border: 2px solid #dfe3e8 !important;
+      border-radius: 6px !important;
+      overflow: hidden !important;
     }
     
     .Polaris-DataTable__Table {
@@ -370,12 +373,14 @@ export default function QuickView() {
       width: 40px !important;
       min-width: 40px !important;
       max-width: 40px !important;
+      border-right: 1px solid #dfe3e8 !important;
     }
     
     .Polaris-DataTable__Cell:nth-child(2),
     .Polaris-DataTable__Cell--header:nth-child(2) {
       width: auto !important;
       min-width: 350px !important;
+      border-right: 1px solid #dfe3e8 !important;
     }
     
     .Polaris-DataTable__Cell:nth-child(3),
@@ -383,6 +388,7 @@ export default function QuickView() {
       width: 120px !important;
       min-width: 120px !important;
       text-align: center !important;
+      border-right: 1px solid #dfe3e8 !important;
     }
     
     .Polaris-DataTable__Cell:nth-child(4),
@@ -404,7 +410,7 @@ export default function QuickView() {
     /* Cell styling */
     .Polaris-DataTable__Cell {
       padding: 12px !important;
-      border-bottom: 1px solid #E1E3E5 !important;
+      border-bottom: 1px solid #dfe3e8 !important;
       background-color: #ffffff !important;
       vertical-align: middle !important;
     }
@@ -412,18 +418,28 @@ export default function QuickView() {
     /* Header styling */
     .Polaris-DataTable__Cell--header {
       padding: 16px 12px !important;
-      background-color: #F9FAFB !important;
-      border-bottom: 1px solid #C9CCCF !important;
+      background-color: #f9fafb !important;
+      border-bottom: 1px solid #dfe3e8 !important;
       font-weight: 600 !important;
     }
     
     /* Footer styling */
     .Polaris-DataTable__Footer {
-      background-color: #F9FAFB !important;
+      background-color: #f9fafb !important;
       padding: 12px !important;
-      border-top: 1px solid #E1E3E5 !important;
+      border-top: 1px solid #dfe3e8 !important;
       font-size: 13px !important;
       color: #637381 !important;
+    }
+
+    /* First row needs top border */
+    .Polaris-DataTable tbody tr:first-child td {
+      border-top: 1px solid #dfe3e8 !important;
+    }
+    
+    /* Last row needs bottom border */
+    .Polaris-DataTable tbody tr:last-child td {
+      border-bottom: 1px solid #dfe3e8 !important;
     }
   `;
 
@@ -558,30 +574,27 @@ export default function QuickView() {
                   </Box>
                   
                   <Box paddingBlockStart="400">
-                    <Card padding="0">
+                    <div style={{ 
+                      borderRadius: '6px',
+                      overflow: 'hidden',
+                      width: '100%'
+                    }}>
                       <style>{tableStyles}</style>
-                      <div style={{ 
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        width: '100%',
-                        boxShadow: '0px 1px 3px rgba(63, 63, 68, 0.15)'
-                      }}>
-                        <DataTable
-                          columnContentTypes={['numeric', 'text', 'text', 'text']}
-                          headings={[
-                            <Text variant="bodySm" as="span" key="col-num" alignment="center">#</Text>,
-                            <Text variant="bodySm" as="span" key="col-item" alignment="start">Product</Text>,
-                            <Text variant="bodySm" as="span" key="col-inv" alignment="center">Inventory</Text>,
-                            <Text variant="bodySm" as="span" key="col-act" alignment="start">Action</Text>
-                          ]}
-                          rows={rows}
-                          footerContent={searchResults.length > 0 ? `${searchResults.length} product${searchResults.length !== 1 ? 's' : ''} found` : ''}
-                          verticalAlign="middle"
-                          increasedTableDensity={false}
-                          hoverable={true}
-                        />
-                      </div>
-                    </Card>
+                      <DataTable
+                        columnContentTypes={['numeric', 'text', 'text', 'text']}
+                        headings={[
+                          <Text variant="bodySm" as="span" key="col-num" alignment="center">#</Text>,
+                          <Text variant="bodySm" as="span" key="col-item" alignment="start">Product</Text>,
+                          <Text variant="bodySm" as="span" key="col-inv" alignment="center">Inventory</Text>,
+                          <Text variant="bodySm" as="span" key="col-act" alignment="start">Action</Text>
+                        ]}
+                        rows={rows}
+                        footerContent={searchResults.length > 0 ? `${searchResults.length} product${searchResults.length !== 1 ? 's' : ''} found` : ''}
+                        verticalAlign="middle"
+                        increasedTableDensity={false}
+                        hoverable={true}
+                      />
+                    </div>
                   </Box>
                 </>
               )}

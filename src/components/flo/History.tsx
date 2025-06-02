@@ -14,11 +14,44 @@ import {
 import { useState, useCallback } from 'react';
 
 export default function FloHistory() {
-  // Add the CSS for hover effect
+  // Add the CSS for hover effect and table borders
   const linkStyle = `
     <style>
       .product-title-link:hover {
         text-decoration: underline !important;
+      }
+      
+      /* Add custom border styling for IndexTable to match image */
+      .Polaris-IndexTable {
+        border: 1px solid #dfe3e8 !important;
+      }
+      
+      .Polaris-IndexTable__TableContainer {
+        border: 1px solid #dfe3e8 !important;
+      }
+      
+      .Polaris-IndexTable__Table {
+        border-collapse: collapse !important;
+      }
+      
+      .Polaris-IndexTable-Header .Polaris-IndexTable-TableHeading {
+        border: 1px solid #dfe3e8 !important;
+        border-top: none !important;
+        background-color: #f4f6f8 !important;
+      }
+      
+      .Polaris-IndexTable-Row {
+        border: 1px solid #dfe3e8 !important;
+      }
+      
+      .Polaris-IndexTable-TableCell {
+        border: 1px solid #dfe3e8 !important;
+      }
+      
+      /* Target both cell types */
+      [class*='Polaris-IndexTable-TableCell'],
+      [class*='Polaris-IndexTable-TableHeading'] {
+        border: 1px solid #dfe3e8 !important;
       }
     </style>
   `;
@@ -250,8 +283,8 @@ export default function FloHistory() {
                         itemCount={filteredData.length}
                         selectable={false}
                         headings={[
-                          { title: 'Details', alignment: 'center' },
-                          { title: 'Final Stock', alignment: 'center' },
+                          { title: 'Details', alignment: 'start' },
+                          { title: 'Final Stock', alignment: 'start' },
                         ]}
                       >
                         {paginatedData.map((item, index) => (

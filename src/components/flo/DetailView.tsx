@@ -618,6 +618,139 @@ export default function AnalyzeProductsPage() {
       white-space: normal !important;
       word-break: break-all !important;
     }
+
+    /* Fixed column table layout - improved version */
+    .shopify-like-table {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(63, 63, 68, 0.15);
+      background: white;
+      border: 1px solid #dfe3e8;
+      margin-bottom: 32px;
+    }
+
+    /* Create a container for the scrollable part */
+    .table-with-fixed-columns {
+      position: relative;
+      overflow-x: auto;
+      width: 100%;
+      max-height: 100%;
+      scrollbar-width: thin; /* For Firefox */
+      scrollbar-color: #c4cdd5 #f1f1f1; /* For Firefox */
+    }
+
+    /* Style the table with fixed columns */
+    .table-with-fixed-columns table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    /* Fix the first column (SKU) */
+    .table-with-fixed-columns th:nth-child(1),
+    .table-with-fixed-columns td:nth-child(1) {
+      position: sticky;
+      left: 0;
+      z-index: 3;
+      background-color: white !important; /* Use !important and explicit color */
+      width: 120px;
+      min-width: 120px;
+      max-width: 120px;
+      box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Fix the second column (Items) */
+    .table-with-fixed-columns th:nth-child(2),
+    .table-with-fixed-columns td:nth-child(2) {
+      position: sticky;
+      left: 120px;
+      z-index: 3;
+      background-color: white !important; /* Use !important and explicit color */
+      width: 250px;
+      min-width: 250px;
+      max-width: 250px;
+      border-right: 2px solid #dfe3e8;
+      box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Fix hover states for fixed columns */
+    .table-with-fixed-columns tr:hover td:nth-child(1),
+    .table-with-fixed-columns tr:hover td:nth-child(2) {
+      background-color: rgba(180, 188, 199, 0.05) !important;
+    }
+
+    /* SKU header row styling - fix background colors */
+    tr.Polaris-DataTable__Row:has(.sku-header-row) td:nth-child(1),
+    tr.Polaris-DataTable__Row:has(.sku-header-row) td:nth-child(2),
+    tr.Polaris-DataTable__Row:has(.sku-header-row) th {
+      background-color: #f4f6f8 !important;
+      z-index: 4 !important;
+    }
+
+    /* Ensure quantity popups stay within their own cells */
+    .stock-value-wrapper {
+      z-index: 1;
+      position: relative;
+      isolation: isolate; /* Create a new stacking context */
+    }
+
+    /* When displaying quantity popup, increase z-index but keep it in its stacking context */
+    .stock-value-wrapper.active {
+      z-index: 5 !important;
+    }
+
+    /* Fix the quantity popup positioning and stacking */
+    .quantity-popup {
+      z-index: 100 !important; /* Higher z-index */
+      position: fixed !important; /* Change to fixed positioning */
+      isolation: isolate; /* Create a new stacking context */
+    }
+
+    /* Improve scrollbar visibility */
+    .table-with-fixed-columns::-webkit-scrollbar {
+      height: 12px; /* Taller scrollbar for easier targeting */
+      cursor: pointer;
+    }
+
+    .table-with-fixed-columns::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 6px;
+    }
+
+    .table-with-fixed-columns::-webkit-scrollbar-thumb {
+      background: #c4cdd5;
+      border-radius: 6px;
+      border: 2px solid #f1f1f1;
+    }
+
+    .table-with-fixed-columns::-webkit-scrollbar-thumb:hover {
+      background: #b6bcc2;
+    }
+
+    /* Fix the quantity popup positioning and stacking */
+    .quantity-popup {
+      position: fixed !important; /* Change to fixed positioning */
+      z-index: 1000 !important; /* Highest z-index */
+      background-color: white !important;
+      border-radius: 8px;
+      box-shadow: 0 0 0 1px rgba(63, 63, 68, 0.05), 0 1px 3px 0 rgba(63, 63, 68, 0.15), 0 10px 20px 0 rgba(63, 63, 68, 0.15);
+      padding: 16px;
+      min-width: 220px;
+      text-align: left;
+    }
+
+    /* When stock-value-wrapper is active, increase z-index */
+    .stock-value-wrapper.active {
+      z-index: 999 !important;
+      position: relative;
+    }
+
+    /* Make sure the quantity input is visible */
+    .quantity-input {
+      position: relative;
+      z-index: 1001;
+    }
   `;
 
   const simulateAnalysis = useCallback(() => {
@@ -1115,15 +1248,20 @@ export default function AnalyzeProductsPage() {
     const getPopupPosition = () => {
       if (!wrapperRef.current) return {};
       
-      // Get the wrapper's position
+      // Get the wrapper's position relative to viewport
       const rect = wrapperRef.current.getBoundingClientRect();
-      const isNearRightEdge = window.innerWidth - rect.right < 230; // 230px is approx popup width
       
-      if (isNearRightEdge) {
-        return { right: '0', left: 'auto' };
-      }
+      // Determine if popup would be off-screen
+      const isNearRightEdge = window.innerWidth - rect.right < 230;
+      const isNearBottomEdge = window.innerHeight - rect.bottom < 200;
       
-      return { left: '0', right: 'auto' };
+      // Calculate optimal position for popup
+      return {
+        position: 'fixed',
+        top: isNearBottomEdge ? `${rect.top - 120}px` : `${rect.bottom + 5}px`,
+        left: isNearRightEdge ? `${rect.left - 180}px` : `${rect.left}px`,
+        zIndex: 1000 // Ensure it's above everything
+      };
     };
 
     const handleOpen = () => {
@@ -1198,7 +1336,11 @@ export default function AnalyzeProductsPage() {
     const isInStock = value === 'NA' || Number(value) >= 10;
     
     return (
-      <div className="stock-value-wrapper" ref={wrapperRef} onClick={handleOpen}>
+      <div 
+        className={`stock-value-wrapper ${isPopupOpen ? 'active' : ''}`} 
+        ref={wrapperRef} 
+        onClick={handleOpen}
+      >
         <div className={`inventory-status ${isInStock ? 'in-stock' : 'low-stock'}`}>
           {value}
         </div>
@@ -1208,10 +1350,7 @@ export default function AnalyzeProductsPage() {
             className="quantity-popup" 
             ref={popupRef} 
             onClick={(e) => e.stopPropagation()}
-            style={{
-              ...getPopupPosition(),
-              zIndex: 999 // Ensure popup is on top of everything
-            }}
+            style={getPopupPosition() as React.CSSProperties}
           >
             <div className="quantity-field" style={{ width: "100%" }}>
               <label htmlFor={`newValue-${item.id}-${locationKey}`} className="quantity-field-label">Enter quantity</label>
@@ -1422,7 +1561,7 @@ export default function AnalyzeProductsPage() {
                     <>
                       <style>{shopifyTableStyles}</style>
                       <div className="shopify-like-table">
-                        <div className="shopify-like-table">
+                        <div className="table-with-fixed-columns">
                           <table className="Polaris-DataTable__Table">
                             <thead>
                               <tr>
@@ -1444,6 +1583,24 @@ export default function AnalyzeProductsPage() {
                                 <th className="Polaris-DataTable__Cell Polaris-DataTable__Cell--verticalAlignTop" style={{ textAlign: "center" }}>
                                   <Text as="span" variant="bodySm" fontWeight="semibold">Location 4</Text>
                                 </th>
+                                <th className="Polaris-DataTable__Cell Polaris-DataTable__Cell--verticalAlignTop" style={{ textAlign: "center" }}>
+                                  <Text as="span" variant="bodySm" fontWeight="semibold">Location 5</Text>
+                                </th>
+                                <th className="Polaris-DataTable__Cell Polaris-DataTable__Cell--verticalAlignTop" style={{ textAlign: "center" }}>
+                                  <Text as="span" variant="bodySm" fontWeight="semibold">Location 6</Text>
+                                </th>
+                                <th className="Polaris-DataTable__Cell Polaris-DataTable__Cell--verticalAlignTop" style={{ textAlign: "center" }}>
+                                  <Text as="span" variant="bodySm" fontWeight="semibold">Location 7</Text>
+                                </th>
+                                <th className="Polaris-DataTable__Cell Polaris-DataTable__Cell--verticalAlignTop" style={{ textAlign: "center" }}>
+                                  <Text as="span" variant="bodySm" fontWeight="semibold">Location 8</Text>
+                                </th>
+                                <th className="Polaris-DataTable__Cell Polaris-DataTable__Cell--verticalAlignTop" style={{ textAlign: "center" }}>
+                                  <Text as="span" variant="bodySm" fontWeight="semibold">Location 9</Text>
+                                </th>
+                                <th className="Polaris-DataTable__Cell Polaris-DataTable__Cell--verticalAlignTop" style={{ textAlign: "center" }}>
+                                  <Text as="span" variant="bodySm" fontWeight="semibold">Location 10</Text>
+                                </th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1452,7 +1609,7 @@ export default function AnalyzeProductsPage() {
                                   {/* SKU header row */}
                                   <tr className="Polaris-DataTable__Row">
                                     <th
-                                      colSpan={6}
+                                      colSpan={12}
                                       className="Polaris-DataTable__Cell Polaris-DataTable__Cell--verticalAlignTop Polaris-DataTable__Cell--firstColumn"
                                       scope="row"
                                     >
@@ -1517,16 +1674,14 @@ export default function AnalyzeProductsPage() {
                                           </div>
                                         </div>
                                       </td>
+                                      {/* First two locations - keep as is */}
                                       <td className="Polaris-DataTable__Cell Polaris-DataTable__Cell--verticalAlignTop" style={{ textAlign: "center", padding: "4px" }}>
                                         <EditableQuantity
                                           value={item.locations.mumbai}
                                           skuGroup={skuGroup}
                                           item={item}
                                           locationKey="mumbai"
-                                          onUpdate={(newValue) => {
-                                            // This onUpdate is no longer needed as the logic is inside the component
-                                            // but we'll keep it for backward compatibility
-                                          }}
+                                          onUpdate={() => {}}
                                         />
                                       </td>
                                       <td className="Polaris-DataTable__Cell Polaris-DataTable__Cell--verticalAlignTop" style={{ textAlign: "center", padding: "4px" }}>
@@ -1535,39 +1690,36 @@ export default function AnalyzeProductsPage() {
                                           skuGroup={skuGroup}
                                           item={item}
                                           locationKey="uniqueSpareWarehouse"
-                                          onUpdate={(newValue) => {
-                                            // This onUpdate is no longer needed as the logic is inside the component
-                                          }}
-                                        />
-                                      </td>
-                                      <td className="Polaris-DataTable__Cell Polaris-DataTable__Cell--verticalAlignTop" style={{ textAlign: "center" }}>
-                                        <EditableQuantity
-                                          value={(item.locations as any).location3 || Math.floor((item.id * 13) % 20) + 1}
-                                          skuGroup={skuGroup}
-                                          item={item}
-                                          locationKey="location3"
                                           onUpdate={() => {}}
                                         />
                                       </td>
-                                      <td className="Polaris-DataTable__Cell Polaris-DataTable__Cell--verticalAlignTop" style={{ textAlign: "center" }}>
-                                        <EditableQuantity
-                                          value={(item.locations as any).location4 || Math.floor((item.id * 17) % 20) + 1}
-                                          skuGroup={skuGroup}
-                                          item={item}
-                                          locationKey="location4"
-                                          onUpdate={() => {}}
-                                        />
-                                      </td>
+                                      {/* Locations 3-10 */}
+                                      {Array.from({ length: 8 }).map((_, index) => (
+                                        <td 
+                                          key={`location-${index+3}`}
+                                          className="Polaris-DataTable__Cell Polaris-DataTable__Cell--verticalAlignTop" 
+                                          style={{ textAlign: "center", padding: "4px" }}
+                                        >
+                                          <EditableQuantity
+                                            value={(item.locations as any)[`location${index+3}`] || Math.floor((item.id * (index+7)) % 20) + 1}
+                                            skuGroup={skuGroup}
+                                            item={item}
+                                            locationKey={`location${index+3}`}
+                                            onUpdate={() => {}}
+                                          />
+                                        </td>
+                                      ))}
                                     </tr>
                                   ))}
                                   {/* Divider row between SKU groups */}
                                   {groupIndex < filteredSkus.length - 1 && (
                                     <tr>
+                                      {/* Update colspan to match total number of columns */}
                                       <td 
-                                        colSpan={6} 
+                                        colSpan={12}
                                         style={{ 
                                           height: "1px", 
-                                          backgroundColor: "#babfc3", // Make all dividers darker
+                                          backgroundColor: "#babfc3",
                                           padding: 0 
                                         }}
                                       ></td>
