@@ -97,14 +97,6 @@ export default function QuickView() {
     setToastContent(content);
     setToastError(isError);
     setToastActive(true);
-    
-    // Auto-dismiss after 3 seconds (3000ms)
-    const timer = setTimeout(() => {
-      setToastActive(false);
-    }, 3000);
-    
-    // Clear the timeout if the component unmounts
-    return () => clearTimeout(timer);
   }, []);
 
   const locations = [
@@ -259,25 +251,21 @@ export default function QuickView() {
   const rows = searchResults.map((item, index) => [
     // Row number column
     <Box padding="300" key={`num-${item.variantId}`}>
-      <div style={{ textAlign: "center" }}>
-        <Text as="span" variant="bodySm" tone="subdued">
-          {index + 1}
-        </Text>
-      </div>
+      <Text as="span" variant="bodySm" tone="subdued">
+        {index + 1}
+      </Text>
     </Box>,
     
     // Product column (without image)
     <Box padding="300" key={`product-${item.variantId}`} width="100%">
       <BlockStack gap="200">
-        {/* Product title - Show full title with proper line breaks and make clickable */}
+        {/* Product title with responsive styling - no truncation on desktop */}
         <div style={{ 
-          maxWidth: "350px",
           width: "100%", 
           position: "relative",
           overflow: "hidden",
-          maxHeight: "none", // Remove height restriction
           display: "block",
-          whiteSpace: "normal"
+          whiteSpace: "normal" // Allows text to wrap naturally
         }}>
           <Link
             url={`https://admin.shopify.com/store/your-store/products/${item.shopifyId}`}
@@ -287,108 +275,93 @@ export default function QuickView() {
           >
             <span style={{ color: "#202223" }}>
               <Text as="h3" variant="bodyMd" fontWeight="semibold">
-                {/* Show full title */}
+                {/* No truncation - let text wrap naturally */}
                 {item.title}
               </Text>
             </span>
           </Link>
         </div>
         
-        {/* Product metadata - increased gap between title and metadata */}
-        <InlineStack gap="400" wrap={true}>
+        {/* Product metadata - made more responsive */}
+        <InlineStack gap="200" wrap={true}>
           <Text as="span" variant="bodySm" tone="subdued">
             SKU: {item.sku}
           </Text>
-          <Text as="span" variant="bodySm" tone="subdued">
-            Shopify ID: {item.shopifyId}
-          </Text>
-          <Text as="span" variant="bodySm" tone="subdued">
-            Variant ID: {item.variantId}
+          {/* Only show IDs on larger screens */}
+          <Text as="span" variant="bodySm" tone="subdued" visuallyHidden>
+            ID: {item.shopifyId.substring(0, 8)}...
           </Text>
         </InlineStack>
       </BlockStack>
     </Box>,
     
     // Updated inventory column - matching Shopify admin's stock level formatting
-    <Box padding="300" key={`inventory-${item.variantId}`}>
-      <div style={{ 
-        textAlign: "left",
-        paddingLeft: "16px"
-      }}>
-        {item.inventory <= 9 ? (
-          <Text as="span" variant="bodySm" tone="critical">
-            {item.inventory} in stock
-          </Text>
-        ) : (
-          <Text as="span" variant="bodySm">
-            {item.inventory} in stock
-          </Text>
-        )}
-      </div>
+    <Box padding="300" paddingInlineStart="400" key={`inventory-${item.variantId}`}>
+      {item.inventory <= 9 ? (
+        <Text as="span" variant="bodySm" tone="critical">
+          {item.inventory} in stock
+        </Text>
+      ) : (
+        <Text as="span" variant="bodySm">
+          {item.inventory} in stock
+        </Text>
+      )}
     </Box>,
     
-    // Action buttons matching Shopify's style from the image
+    // Action buttons matching Shopify's style
     <Box padding="300" key={`actions-${item.variantId}`}>
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <InlineStack gap="400">
-          <Link 
-            url={`https://admin.shopify.com/store/your-store/products/${item.shopifyId}`}
-            external={true}
-            monochrome
-          >
-            View
-          </Link>
-          <Link 
-            url={`https://admin.shopify.com/store/your-store/products/${item.shopifyId}/edit`}
-            external={true}
-            monochrome
-          >
-            Edit
-          </Link>
-        </InlineStack>
+      <div className="action-links" style={{ justifyContent: "flex-end", textAlign: "right" }}>
+        <Link 
+          url={`https://admin.shopify.com/store/your-store/products/${item.shopifyId}`}
+          external={true}
+          monochrome
+        >
+          View
+        </Link>
+        <div style={{ width: "16px" }}></div>
+        <Link 
+          url={`https://admin.shopify.com/store/your-store/products/${item.shopifyId}/edit`}
+          external={true}
+          monochrome
+        >
+          Edit
+        </Link>
       </div>
     </Box>
   ]);
 
-  // Update your tableStyles to match Shopify Admin with the same border styling
+  // Replace the tableStyles with this more responsive version:
   const tableStyles = `
-    /* Global table styling */
+    /* Global table styling - closer to Polaris defaults */
     .Polaris-DataTable {
       width: 100% !important;
-      border: 2px solid #dfe3e8 !important;
-      border-radius: 6px !important;
-      overflow: hidden !important;
+      border-radius: 8px !important;
+      overflow-x: auto !important;
     }
     
     .Polaris-DataTable__Table {
       width: 100% !important;
-      table-layout: fixed !important;
-      border-collapse: separate !important;
-      border-spacing: 0 !important;
+      table-layout: auto !important;
     }
     
-    /* Column widths */
+    /* Column widths - more responsive with consistent text alignment */
     .Polaris-DataTable__Cell:nth-child(1),
     .Polaris-DataTable__Cell--header:nth-child(1) {
       width: 40px !important;
       min-width: 40px !important;
       max-width: 40px !important;
-      border-right: 1px solid #dfe3e8 !important;
     }
     
     .Polaris-DataTable__Cell:nth-child(2),
     .Polaris-DataTable__Cell--header:nth-child(2) {
       width: auto !important;
-      min-width: 350px !important;
-      border-right: 1px solid #dfe3e8 !important;
+      min-width: 200px !important;
     }
     
     .Polaris-DataTable__Cell:nth-child(3),
     .Polaris-DataTable__Cell--header:nth-child(3) {
-      width: 120px !important;
-      min-width: 120px !important;
-      text-align: center !important;
-      border-right: 1px solid #dfe3e8 !important;
+      width: 100px !important;
+      min-width: 80px !important;
     }
     
     .Polaris-DataTable__Cell:nth-child(4),
@@ -398,48 +371,25 @@ export default function QuickView() {
       text-align: right !important;
     }
     
-    /* Row styling */
-    .Polaris-DataTable__Row {
-      cursor: pointer !important;
+    /* Make action links display properly but maintain left alignment */
+    .action-links {
+      display: flex;
+      justify-content: flex-start;
+      white-space: nowrap;
     }
     
-    .Polaris-DataTable__Row:hover td {
-      background-color: rgba(180, 188, 199, 0.1) !important;
-    }
-    
-    /* Cell styling */
-    .Polaris-DataTable__Cell {
-      padding: 12px !important;
-      border-bottom: 1px solid #dfe3e8 !important;
-      background-color: #ffffff !important;
-      vertical-align: middle !important;
-    }
-    
-    /* Header styling */
-    .Polaris-DataTable__Cell--header {
-      padding: 16px 12px !important;
-      background-color: #f9fafb !important;
-      border-bottom: 1px solid #dfe3e8 !important;
-      font-weight: 600 !important;
-    }
-    
-    /* Footer styling */
-    .Polaris-DataTable__Footer {
-      background-color: #f9fafb !important;
-      padding: 12px !important;
-      border-top: 1px solid #dfe3e8 !important;
-      font-size: 13px !important;
-      color: #637381 !important;
-    }
-
-    /* First row needs top border */
-    .Polaris-DataTable tbody tr:first-child td {
-      border-top: 1px solid #dfe3e8 !important;
-    }
-    
-    /* Last row needs bottom border */
-    .Polaris-DataTable tbody tr:last-child td {
-      border-bottom: 1px solid #dfe3e8 !important;
+    /* Mobile adjustments */
+    @media screen and (max-width: 500px) {
+      .action-links {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      
+      .Polaris-DataTable__Cell,
+      .Polaris-DataTable__Cell--header {
+        padding: 8px !important;
+      }
     }
   `;
 
@@ -457,7 +407,7 @@ export default function QuickView() {
           <Box padding="400"> {/* space-400 (16px) for card padding */}
             <FormLayout>
               <InlineStack gap="400" wrap blockAlign="center">
-                <Box width="300px">
+                <Box minWidth="180px" maxWidth="300px" width="100%">
                   <Select
                     label="Location"
                     labelHidden
@@ -468,7 +418,7 @@ export default function QuickView() {
                   />
                 </Box>
 
-                <Box width="300px">
+                <Box minWidth="180px" maxWidth="300px" width="100%">
                   <TextField
                     label="SKU"
                     labelHidden
@@ -512,7 +462,7 @@ export default function QuickView() {
                   </Text>
                   <Box paddingBlockStart="300">
                     <InlineStack gap="400" wrap blockAlign="start">
-                      <Box width="180px">
+                      <Box minWidth="150px" maxWidth="180px" width="100%">
                         <Select
                           label="SKU Condition"
                           labelHidden
@@ -526,7 +476,7 @@ export default function QuickView() {
                         />
                       </Box>
 
-                      <Box width="300px">
+                      <Box minWidth="180px" maxWidth="300px" width="100%">
                         <TextField
                           label="SKU Input"
                           labelHidden
@@ -552,8 +502,8 @@ export default function QuickView() {
                         Restock Inventory
                       </Text>
                     </Box>
-                    <InlineStack gap="400" blockAlign="end" wrap={false}>
-                      <Box width="200px">
+                    <InlineStack gap="400" blockAlign="end" wrap={true}>
+                      <Box minWidth="150px" maxWidth="200px" width="100%">
                         <TextField
                           label="Quantity" 
                           value={restockQty}
@@ -566,6 +516,7 @@ export default function QuickView() {
                       <Box>
                         <Button
                           onClick={handleUpdateInventory}
+                          variant="primary"
                         >
                           Update Inventory
                         </Button>
@@ -579,23 +530,29 @@ export default function QuickView() {
                       overflow: 'hidden',
                       width: '100%'
                     }}>
-                      <style>{tableStyles}</style>
-                      <DataTable
-                        columnContentTypes={['numeric', 'text', 'text', 'text']}
-                        headings={[
-                          <Text variant="bodySm" as="span" key="col-num" alignment="center">#</Text>,
-                          <Text variant="bodySm" as="span" key="col-item" alignment="start">Product</Text>,
-                          <Text variant="bodySm" as="span" key="col-inv" alignment="center">Inventory</Text>,
-                          <Text variant="bodySm" as="span" key="col-act" alignment="start">Action</Text>
-                        ]}
-                        rows={rows}
-                        footerContent={searchResults.length > 0 ? `${searchResults.length} product${searchResults.length !== 1 ? 's' : ''} found` : ''}
-                        verticalAlign="middle"
-                        increasedTableDensity={false}
-                        hoverable={true}
-                      />
-                    </div>
-                  </Box>
+                      <div style={{
+      overflowX: 'auto',
+      width: '100%',
+      WebkitOverflowScrolling: 'touch' // For smooth scrolling on iOS
+    }}>
+                          <style>{tableStyles}</style>
+                          <DataTable
+                            columnContentTypes={['numeric', 'text', 'text', 'text']}
+                            headings={[
+                              <Text variant="bodyMd" fontWeight="semibold" as="span" key="col-num" alignment="start">#</Text>,
+                              <Text variant="bodyMd" fontWeight="semibold" as="span" key="col-item" alignment="start">Product</Text>,
+                              <Text variant="bodyMd" fontWeight="semibold" as="span" key="col-inv" alignment="start">Inventory</Text>,
+                              <Text variant="bodyMd" fontWeight="semibold" as="span" key="col-act" alignment="start">Action</Text>
+                            ]}
+                            rows={rows}
+                            footerContent={searchResults.length > 0 ? `${searchResults.length} product${searchResults.length !== 1 ? 's' : ''} found` : ''}
+                            verticalAlign="middle"
+                            increasedTableDensity={false}
+                            hoverable={true}
+                          />
+                        </div>
+                      </div>
+                    </Box>
                 </>
               )}
             </FormLayout>
