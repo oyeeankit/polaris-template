@@ -50,14 +50,18 @@ export default function FloHistory() {
       /* Add custom border styling for IndexTable to match image */
       .Polaris-IndexTable {
         border: 1px solid var(--p-color-border) !important;
+        border-radius: 8px !important;
+        overflow: hidden !important;
       }
       
       .Polaris-IndexTable__TableContainer {
-        border: 1px solid var(--p-color-border) !important;
+        border-radius: 8px !important;
+        overflow: hidden !important;
       }
       
       .Polaris-IndexTable__Table {
-        border-collapse: collapse !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
       }
       
       .Polaris-IndexTable-Header .Polaris-IndexTable-TableHeading {
@@ -78,6 +82,23 @@ export default function FloHistory() {
       [class*='Polaris-IndexTable-TableCell'],
       [class*='Polaris-IndexTable-TableHeading'] {
         border: 1px solid var(--p-color-border) !important;
+      }
+
+      /* Fix for the corner styling */
+      .Polaris-IndexTable__TableRow:first-child .Polaris-IndexTable-TableCell:first-child {
+        border-top-left-radius: 8px !important;
+      }
+      
+      .Polaris-IndexTable__TableRow:first-child .Polaris-IndexTable-TableCell:last-child {
+        border-top-right-radius: 8px !important;
+      }
+      
+      .Polaris-IndexTable__TableRow:last-child .Polaris-IndexTable-TableCell:first-child {
+        border-bottom-left-radius: 8px !important;
+      }
+      
+      .Polaris-IndexTable__TableRow:last-child .Polaris-IndexTable-TableCell:last-child {
+        border-bottom-right-radius: 8px !important;
       }
 
       @media (max-width: 767px) {
@@ -511,7 +532,13 @@ export default function FloHistory() {
                               <Box paddingInlineStart="400" paddingBlockStart="200">
                                 <Card padding="0" background="bg-surface">
                                   <Box paddingBlockStart="0" paddingBlockEnd="0" paddingInlineStart="0" paddingInlineEnd="0">
-                                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                    <table style={{ 
+                                      width: '100%', 
+                                      borderCollapse: 'collapse',
+                                      borderRadius: '8px',
+                                      overflow: 'hidden',
+                                      border: '1px solid var(--p-color-border)'
+                                    }}>
                                       <thead>
                                         <tr style={{ 
                                           borderBottom: '1px solid var(--p-color-border)',

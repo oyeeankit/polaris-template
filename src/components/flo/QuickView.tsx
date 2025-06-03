@@ -86,6 +86,11 @@ export default function QuickView() {
   // Add these new states for advanced search
   const [skuCondition, setSkuCondition] = useState<string>('equal');
   const [advancedSku, setAdvancedSku] = useState<string>('');
+  
+  // Add these new states for the SKU selection feature
+  const [uniqueSkus, setUniqueSkus] = useState<string[]>([]);
+  const [selectedSku, setSelectedSku] = useState<string>('');
+  const [showSkuSelection, setShowSkuSelection] = useState<boolean>(false);
 
   // Toast state
   const [toastActive, setToastActive] = useState(false);
@@ -194,14 +199,26 @@ export default function QuickView() {
         filteredResults = mockProducts.filter(
           product => product.sku.toUpperCase() === advancedSku.toUpperCase()
         );
-      } else if (skuCondition === 'contains') {
-        filteredResults = mockProducts.filter(
-          product => product.sku.toUpperCase().includes(advancedSku.toUpperCase())
-        );
+        setShowSkuSelection(false);
+        setSelectedSku('');
+        setUniqueSkus([]);
       } else if (skuCondition === 'starts') {
+        // Get all products that start with the search term
         filteredResults = mockProducts.filter(
           product => product.sku.toUpperCase().startsWith(advancedSku.toUpperCase())
         );
+        
+        if (filteredResults.length > 0) {
+          // Extract unique SKUs from filtered results
+          const skus = Array.from(new Set(filteredResults.map(item => item.sku)));
+          setUniqueSkus(skus);
+          setShowSkuSelection(true);
+          setSelectedSku(''); // Reset selection
+          
+          // Don't show products yet, just SKU options
+          setSearchResults([]);
+          return;
+        }
       }
 
       if (filteredResults.length > 0) {
@@ -210,6 +227,70 @@ export default function QuickView() {
         setSearchResults([]);
         showToast('No results found', true);
       }
+    }
+  };
+
+  // Add handler for SKU selection
+  const handleSkuSelect = (value: string) => {
+    setSelectedSku(value);
+    
+    // Mock data with realistic images
+    const mockProducts = [
+      {
+        shopifyId: '9646363279652',
+        variantId: '49865314894116',
+        sku: 'ABC123',
+        title: 'T TICCI Pickleball Paddles Set of 2, USAPA Approved Fiberglass Pickle Ball Paddles with 4 Pickleballs, Lightweight Rackets for Adults & Kids, Includes Carry Bag & Net Bag for Men, Women, Beginners,',
+        inventory: 5,
+        image: "https://burst.shopifycdn.com/photos/leather-boots-with-yellow-laces_373x@2x.jpg",
+        date: '2025-05-20',
+      },
+      {
+        shopifyId: '8011199873176',
+        variantId: '43120834511000',
+        sku: 'ABC456',
+        title: 'SAMSUNG 32-inch S3 (S39GD) FHD 2025',
+        inventory: 10,
+        image: "https://burst.shopifycdn.com/photos/widescreen-monitor_373x@2x.jpg",
+        date: '2025-05-22',
+      },
+      {
+        shopifyId: '8011199873177',
+        variantId: '43120834511001',
+        sku: 'ABC789',
+        title: 'K380 多工藍牙鍵盤 - 白色',
+        inventory: 15,
+        image: "https://burst.shopifycdn.com/photos/white-keyboard-top-down_373x@2x.jpg",
+        date: '2025-05-19',
+      },
+      {
+        shopifyId: '8011199873178',
+        variantId: '43120834511002',
+        sku: 'ABC321',
+        title: 'Organic Cotton T-Shirt - Blue / XL',
+        inventory: 8,
+        image: "https://burst.shopifycdn.com/photos/blue-t-shirt_373x@2x.jpg",
+        date: '2025-05-18',
+      },
+      {
+        shopifyId: '8011199873179',
+        variantId: '43120834511003',
+        sku: 'ABC654',
+        title: 'Bamboo Water Bottle 750ml',
+        inventory: 0,
+        image: "https://burst.shopifycdn.com/photos/water-bottle-in-hand_373x@2x.jpg",
+        date: '2025-05-17',
+      }
+    ];
+
+    // Filter products to get only the ones with exact matching SKU
+    const exactMatches = mockProducts.filter(product => product.sku === value);
+    
+    if (exactMatches.length > 0) {
+      setSearchResults(exactMatches);
+    } else {
+      setSearchResults([]);
+      showToast('No results found for the selected SKU', true);
     }
   };
 
@@ -402,9 +483,9 @@ export default function QuickView() {
         onAction: () => navigate('/flo/inventory')
       }}
     >
-      <BlockStack gap="500"> {/* space-500 (20px) for spacing between cards */}
+      <BlockStack gap="500">
         <Card>
-          <Box padding="400"> {/* space-400 (16px) for card padding */}
+          <Box padding="400">
             <FormLayout>
               <InlineStack gap="400" wrap blockAlign="center">
                 <Box minWidth="180px" maxWidth="300px" width="100%">
@@ -456,7 +537,6 @@ export default function QuickView() {
 
               {showAdvanced && (
                 <Box paddingBlockEnd="200">
-                  {/* Use consistent heading style */}
                   <Text as="h2" variant="headingSm" fontWeight="semibold">
                     SKU
                   </Text>
@@ -468,11 +548,15 @@ export default function QuickView() {
                           labelHidden
                           options={[
                             { label: 'Is equal to', value: 'equal' },
-                            { label: 'Contains', value: 'contains' },
                             { label: 'Starts with', value: 'starts' },
                           ]}
                           value={skuCondition}
-                          onChange={(value: string) => setSkuCondition(value)}
+                          onChange={(value: string) => {
+                            setSkuCondition(value);
+                            setSelectedSku('');
+                            setShowSkuSelection(false);
+                            setSearchResults([]);
+                          }}
                         />
                       </Box>
 
@@ -490,6 +574,29 @@ export default function QuickView() {
                       <Button onClick={handleAdvancedSearch}>Search</Button>
                     </InlineStack>
                   </Box>
+                  
+                  {/* SKU Selection dropdown - show only when we have results and using "starts with" search */}
+                  {showSkuSelection && uniqueSkus.length > 0 && (
+                    <Box paddingBlockStart="400">
+                      <BlockStack gap="200">
+                        <Text as="h3" variant="bodySm" fontWeight="semibold">
+                          {uniqueSkus.length} matching SKUs found - please select one:
+                        </Text>
+                        <InlineStack gap="400" wrap blockAlign="center">
+                          <Box minWidth="200px" maxWidth="300px" width="100%">
+                            <Select
+                              label="Select SKU"
+                              labelHidden
+                              options={uniqueSkus.map(sku => ({ label: sku, value: sku }))}
+                              value={selectedSku}
+                              onChange={handleSkuSelect}
+                              placeholder="Select a SKU"
+                            />
+                          </Box>
+                        </InlineStack>
+                      </BlockStack>
+                    </Box>
+                  )}
                 </Box>
               )}
 
