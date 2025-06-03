@@ -10,25 +10,132 @@ import {
   Filters,
   Pagination,
   Divider,
+  DataTable
 } from '@shopify/polaris';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+
+// Add these interfaces at the top of the file
+
+interface StockLocation {
+  location: string;
+  quantity: number;
+}
+
+interface SyncedItem {
+  title: string;
+  variantId: string;
+  variantAdminLink: string;
+}
+
+interface SyncHistoryItem {
+  sku: string;
+  orderId: string;
+  orderDate: string;
+  productTitle: string;
+  productVariantId: string;
+  productAdminLink: string;
+  syncedItems: SyncedItem[];
+  finalStock: StockLocation[] | StockLocation;
+}
 
 export default function FloHistory() {
-  // Add the CSS for hover effect
-  const linkStyle = `
-    <style>
+  // Add the CSS for hover effect and table borders
+  useEffect(() => {
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = `
       .product-title-link:hover {
         text-decoration: underline !important;
       }
-    </style>
-  `;
+      
+      /* Add custom border styling for IndexTable to match image */
+      .Polaris-IndexTable {
+        border: 1px solid var(--p-color-border) !important;
+        border-radius: 8px !important;
+        overflow: hidden !important;
+      }
+      
+      .Polaris-IndexTable__TableContainer {
+        border-radius: 8px !important;
+        overflow: hidden !important;
+      }
+      
+      .Polaris-IndexTable__Table {
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+      }
+      
+      .Polaris-IndexTable-Header .Polaris-IndexTable-TableHeading {
+        border: 1px solid var(--p-color-border) !important;
+        border-top: none !important;
+        background-color: var(--p-color-bg-surface-secondary) !important;
+      }
+      
+      .Polaris-IndexTable-Row {
+        border: 1px solid var(--p-color-border) !important;
+      }
+      
+      .Polaris-IndexTable-TableCell {
+        border: 1px solid var(--p-color-border) !important;
+      }
+      
+      /* Target both cell types */
+      [class*='Polaris-IndexTable-TableCell'],
+      [class*='Polaris-IndexTable-TableHeading'] {
+        border: 1px solid var(--p-color-border) !important;
+      }
+
+      /* Fix for the corner styling */
+      .Polaris-IndexTable__TableRow:first-child .Polaris-IndexTable-TableCell:first-child {
+        border-top-left-radius: 8px !important;
+      }
+      
+      .Polaris-IndexTable__TableRow:first-child .Polaris-IndexTable-TableCell:last-child {
+        border-top-right-radius: 8px !important;
+      }
+      
+      .Polaris-IndexTable__TableRow:last-child .Polaris-IndexTable-TableCell:first-child {
+        border-bottom-left-radius: 8px !important;
+      }
+      
+      .Polaris-IndexTable__TableRow:last-child .Polaris-IndexTable-TableCell:last-child {
+        border-bottom-right-radius: 8px !important;
+      }
+
+      @media (max-width: 767px) {
+        /* Stack the columns on small screens */
+        .Polaris-IndexTable-Row {
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .Polaris-IndexTable-TableCell {
+          width: 100% !important;
+          display: block;
+        }
+        
+        /* Add some spacing between stacked cells */
+        .Polaris-IndexTable-TableCell + .Polaris-IndexTable-TableCell {
+          padding-top: 0;
+        }
+      }
+    `;
+    
+    // Append to document head
+    document.head.appendChild(styleElement);
+    
+    // Cleanup on unmount
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
 
   const [queryValue, setQueryValue] = useState('');
   const [showSyncHistory, setShowSyncHistory] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [syncHistory] = useState([
+  const [syncHistory] = useState<SyncHistoryItem[]>([
     {
       sku: 'M482M5_CAMOSCIOM482M5_CAMOSCIO',
       orderId: '11846775308670',
@@ -205,9 +312,6 @@ export default function FloHistory() {
       fullWidth 
       title="History"
     >
-      {/* Insert the style tag */}
-      <div dangerouslySetInnerHTML={{ __html: linkStyle }} />
-      
       <BlockStack gap="500"> {/* Using space-500 (20px) for spacing between cards */}
         <Card>
           <BlockStack gap="0">
@@ -250,9 +354,9 @@ export default function FloHistory() {
                         itemCount={filteredData.length}
                         selectable={false}
                         headings={[
-                          { title: 'Details', alignment: 'center' },
-                          { title: 'Final Stock', alignment: 'center' },
-                        ]}
+                          { title: 'Details', alignment: 'start' },
+                          { title: 'Final Stock', alignment: 'start' },
+                        ]}  
                       >
                         {paginatedData.map((item, index) => (
                           <IndexTable.Row
@@ -276,143 +380,149 @@ export default function FloHistory() {
                                 </Box>
                                 
                                 <Box paddingBlockStart="0">
-                                  <table style={{ 
-                                    width: '100%', 
-                                    borderCollapse: 'collapse',
-                                    borderWidth: '1px',
-                                    borderStyle: 'solid',
-                                    borderColor: 'var(--p-color-border)',
-                                    borderRadius: '8px',
-                                    overflow: 'hidden'
-                                  }}>
-                                    <thead>
-                                      {/* Table header row */}
-                                      <tr style={{ 
-                                        borderBottom: '1px solid var(--p-color-border)',
-                                        background: 'var(--p-color-bg-surface-secondary)'
-                                      }}>
-                                        <th style={{ 
-                                          padding: '12px 16px', 
-                                          textAlign: 'left',
-                                          width: '30%',
-                                          fontWeight: 'normal'
+                                  <div style={{ overflowX: 'auto' }}>
+                                    <table style={{ 
+                                      width: '100%', 
+                                      borderCollapse: 'collapse',
+                                      borderWidth: '1px',
+                                      borderStyle: 'solid',
+                                      borderColor: 'var(--p-color-border)',
+                                      borderRadius: '8px',
+                                      overflow: 'hidden',
+                                      minWidth: '500px' // Prevents too much squeezing on small screens
+                                    }}>
+                                      <thead>
+                                        {/* Table header row */}
+                                        <tr style={{ 
+                                          borderBottom: '1px solid var(--p-color-border)',
+                                          background: 'var(--p-color-bg-surface-secondary)'
                                         }}>
-                                          <Text as="span" variant="bodySm" fontWeight="semibold">
-                                            Order ID
-                                          </Text>
-                                        </th>
-                                        <th style={{ 
-                                          padding: '12px 16px', 
-                                          textAlign: 'left',
-                                          width: '70%',
-                                          fontWeight: 'normal'
-                                        }}>
-                                          <Text as="span" variant="bodySm" fontWeight="semibold">
-                                            Product Title
-                                          </Text>
-                                        </th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {/* Order information data row */}
-                                      <tr style={{ borderBottom: '1px solid var(--p-color-border)' }}>
-                                        <td style={{ 
-                                          padding: '12px 16px', 
-                                          textAlign: 'left',
-                                          verticalAlign: 'top'
-                                        }}>
-                                          <Text as="span" variant="bodySm" fontWeight="medium">
-                                            {item.orderId}
-                                            <br />
-                                            <Text as="span" variant="bodySm" tone="subdued" fontWeight="regular">
-                                              {item.orderDate}
+                                          <th style={{ 
+                                            padding: '12px 16px', 
+                                            textAlign: 'left',
+                                            width: '30%',
+                                            fontWeight: 'normal'
+                                          }}>
+                                            <Text as="span" variant="bodySm" fontWeight="semibold">
+                                              Order ID
                                             </Text>
-                                          </Text>
-                                        </td>
-                                        <td style={{ 
-                                          padding: '12px 16px', 
-                                          textAlign: 'left',
-                                          verticalAlign: 'top',
-                                          wordBreak: 'break-word',
-                                          whiteSpace: 'pre-wrap',
-                                          maxWidth: '0' // Forces td to respect the table layout
-                                        }}>
-                                          <Text as="span" variant="bodySm" fontWeight="medium" breakWord>
-                                            <Link
-                                              url={item.productAdminLink}
-                                              external
-                                              removeUnderline
-                                              monochrome
-                                            >
-                                              {item.productTitle}
-                                            </Link>
-                                            <br />
-                                            <Text as="span" variant="bodySm" tone="subdued" fontWeight="regular">
-                                              Variant ID: {item.productVariantId}
+                                          </th>
+                                          <th style={{ 
+                                            padding: '12px 16px', 
+                                            textAlign: 'left',
+                                            width: '70%',
+                                            fontWeight: 'normal'
+                                          }}>
+                                            <Text as="span" variant="bodySm" fontWeight="semibold">
+                                              Product Title
                                             </Text>
-                                          </Text>
-                                        </td>
-                                      </tr>
-                                    </tbody>
-                                  </table>
-                                </Box>
-                                
-                                {/* Synced Items table */}
-                                <Box paddingBlockStart="400">
-                                  <table style={{ 
-                                    width: '100%', 
-                                    borderCollapse: 'collapse',
-                                    borderWidth: '1px',
-                                    borderStyle: 'solid',
-                                    borderColor: 'var(--p-color-border)',
-                                    borderRadius: '8px',
-                                    overflow: 'hidden'
-                                  }}>
-                                    <tbody>
-                                      {/* Table header row */}
-                                      <tr style={{ 
-                                        borderBottom: '1px solid var(--p-color-border)',
-                                        background: 'var(--p-color-bg-surface-secondary)'
-                                      }}>
-                                        <th style={{ 
-                                          padding: '12px 16px', 
-                                          textAlign: 'left',
-                                          width: '100%',
-                                          fontWeight: 'normal'
-                                        }}>
-                                          <Text as="span" variant="bodySm" fontWeight="semibold">
-                                            Synced Items
-                                          </Text>
-                                        </th>
-                                      </tr>
-                                      
-                                      {/* Synced product data rows - one for each synced item */}
-                                      {item.syncedItems.map((syncedItem, idx) => (
-                                        <tr key={idx} style={{ borderBottom: idx < item.syncedItems.length - 1 ? '1px solid var(--p-color-border)' : 'none' }}>
+                                          </th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {/* Order information data row */}
+                                        <tr style={{ borderBottom: '1px solid var(--p-color-border)' }}>
                                           <td style={{ 
                                             padding: '12px 16px', 
                                             textAlign: 'left',
                                             verticalAlign: 'top'
                                           }}>
                                             <Text as="span" variant="bodySm" fontWeight="medium">
-                                              <Link 
-                                                url={syncedItem.variantAdminLink}
+                                              {item.orderId}
+                                              <br />
+                                              <Text as="span" variant="bodySm" tone="subdued" fontWeight="regular">
+                                                {item.orderDate}
+                                              </Text>
+                                            </Text>
+                                          </td>
+                                          <td style={{ 
+                                            padding: '12px 16px', 
+                                            textAlign: 'left',
+                                            verticalAlign: 'top',
+                                            wordBreak: 'break-word',
+                                            whiteSpace: 'pre-wrap',
+                                            maxWidth: '0' // Forces td to respect the table layout
+                                          }}>
+                                            <Text as="span" variant="bodySm" fontWeight="medium" breakWord>
+                                              <Link
+                                                url={item.productAdminLink}
                                                 external
                                                 removeUnderline
                                                 monochrome
                                               >
-                                                {syncedItem.title}
+                                                {item.productTitle}
                                               </Link>
                                               <br />
                                               <Text as="span" variant="bodySm" tone="subdued" fontWeight="regular">
-                                                Variant ID: {syncedItem.variantId}
+                                                Variant ID: {item.productVariantId}
                                               </Text>
                                             </Text>
                                           </td>
                                         </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </Box>
+                                
+                                {/* Synced Items table */}
+                                <Box paddingBlockStart="400">
+                                  <div style={{ overflowX: 'auto' }}>
+                                    <table style={{
+                                      width: '100%',
+                                      borderCollapse: 'collapse',
+                                      borderWidth: '1px',
+                                      borderStyle: 'solid',
+                                      borderColor: 'var(--p-color-border)',
+                                      borderRadius: '8px',
+                                      overflow: 'hidden',
+                                      minWidth: '500px'
+                                    }}>
+                                      <tbody>
+                                        {/* Table header row */}
+                                        <tr style={{ 
+                                          borderBottom: '1px solid var(--p-color-border)',
+                                          background: 'var(--p-color-bg-surface-secondary)'
+                                        }}>
+                                          <th style={{ 
+                                            padding: '12px 16px', 
+                                            textAlign: 'left',
+                                            width: '100%',
+                                            fontWeight: 'normal'
+                                          }}>
+                                            <Text as="span" variant="bodySm" fontWeight="semibold">
+                                              Synced Items
+                                            </Text>
+                                          </th>
+                                        </tr>
+                                        
+                                        {/* Synced product data rows - one for each synced item */}
+                                        {item.syncedItems.map((syncedItem, idx) => (
+                                          <tr key={idx} style={{ borderBottom: idx < item.syncedItems.length - 1 ? '1px solid var(--p-color-border)' : 'none' }}>
+                                            <td style={{ 
+                                              padding: '12px 16px', 
+                                              textAlign: 'left',
+                                              verticalAlign: 'top'
+                                            }}>
+                                              <Text as="span" variant="bodySm" fontWeight="medium">
+                                                <Link 
+                                                  url={syncedItem.variantAdminLink}
+                                                  external
+                                                  removeUnderline
+                                                  monochrome
+                                                >
+                                                  {syncedItem.title}
+                                                </Link>
+                                                <br />
+                                                <Text as="span" variant="bodySm" tone="subdued" fontWeight="regular">
+                                                  Variant ID: {syncedItem.variantId}
+                                                </Text>
+                                              </Text>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
                                 </Box>
                               </div>
                             </IndexTable.Cell>
@@ -422,7 +532,13 @@ export default function FloHistory() {
                               <Box paddingInlineStart="400" paddingBlockStart="200">
                                 <Card padding="0" background="bg-surface">
                                   <Box paddingBlockStart="0" paddingBlockEnd="0" paddingInlineStart="0" paddingInlineEnd="0">
-                                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                    <table style={{ 
+                                      width: '100%', 
+                                      borderCollapse: 'collapse',
+                                      borderRadius: '8px',
+                                      overflow: 'hidden',
+                                      border: '1px solid var(--p-color-border)'
+                                    }}>
                                       <thead>
                                         <tr style={{ 
                                           borderBottom: '1px solid var(--p-color-border)',
