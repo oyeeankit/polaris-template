@@ -234,16 +234,34 @@ export default function QuickView() {
   const handleSkuSelect = (value: string) => {
     setSelectedSku(value);
     
-    // Mock data with realistic images
+    // Enhanced mock data with more variants for the same SKUs
     const mockProducts = [
       {
         shopifyId: '9646363279652',
         variantId: '49865314894116',
         sku: 'ABC123',
-        title: 'T TICCI Pickleball Paddles Set of 2, USAPA Approved Fiberglass Pickle Ball Paddles with 4 Pickleballs, Lightweight Rackets for Adults & Kids, Includes Carry Bag & Net Bag for Men, Women, Beginners,',
+        title: 'T TICCI Pickleball Paddles Set of 2, USAPA Approved Fiberglass Pickle Ball Paddles',
         inventory: 5,
         image: "https://burst.shopifycdn.com/photos/leather-boots-with-yellow-laces_373x@2x.jpg",
         date: '2025-05-20',
+      },
+      {
+        shopifyId: '9646363279653',
+        variantId: '49865314894117',
+        sku: 'ABC123',
+        title: 'T TICCI Pickleball Paddles Set - Blue/Green Variant',
+        inventory: 3,
+        image: "https://burst.shopifycdn.com/photos/tennis-racket-on-court_373x@2x.jpg",
+        date: '2025-05-20',
+      },
+      {
+        shopifyId: '9646363279654',
+        variantId: '49865314894118',
+        sku: 'ABC123',
+        title: 'T TICCI Pickleball Paddles - Professional Edition',
+        inventory: 0,
+        image: "https://burst.shopifycdn.com/photos/tennis-ball-on-court_373x@2x.jpg",
+        date: '2025-05-21',
       },
       {
         shopifyId: '8011199873176',
@@ -255,12 +273,30 @@ export default function QuickView() {
         date: '2025-05-22',
       },
       {
+        shopifyId: '8011199873182',
+        variantId: '43120834511006',
+        sku: 'ABC456',
+        title: 'SAMSUNG 32-inch S3 (S39GD) FHD 2025 - Black',
+        inventory: 7,
+        image: "https://burst.shopifycdn.com/photos/black-framed-tv-screen_373x@2x.jpg",
+        date: '2025-05-22',
+      },
+      {
         shopifyId: '8011199873177',
         variantId: '43120834511001',
         sku: 'ABC789',
         title: 'K380 多工藍牙鍵盤 - 白色',
         inventory: 15,
         image: "https://burst.shopifycdn.com/photos/white-keyboard-top-down_373x@2x.jpg",
+        date: '2025-05-19',
+      },
+      {
+        shopifyId: '8011199873190',
+        variantId: '43120834511014',
+        sku: 'ABC789',
+        title: 'K380 多工藍牙鍵盤 - 黑色',
+        inventory: 8,
+        image: "https://burst.shopifycdn.com/photos/workspace-with-keyboard_373x@2x.jpg",
         date: '2025-05-19',
       },
       {
@@ -280,6 +316,15 @@ export default function QuickView() {
         inventory: 0,
         image: "https://burst.shopifycdn.com/photos/water-bottle-in-hand_373x@2x.jpg",
         date: '2025-05-17',
+      },
+      {
+        shopifyId: '8011199873180',
+        variantId: '43120834511004',
+        sku: 'ABC654',
+        title: 'Bamboo Water Bottle 500ml',
+        inventory: 12,
+        image: "https://burst.shopifycdn.com/photos/glass-water-bottle_373x@2x.jpg",
+        date: '2025-05-17',
       }
     ];
 
@@ -288,6 +333,7 @@ export default function QuickView() {
     
     if (exactMatches.length > 0) {
       setSearchResults(exactMatches);
+      showToast(`Found ${exactMatches.length} product${exactMatches.length > 1 ? 's' : ''} with SKU: ${value}`, false);
     } else {
       setSearchResults([]);
       showToast('No results found for the selected SKU', true);
