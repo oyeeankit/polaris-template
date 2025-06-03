@@ -234,7 +234,7 @@ export default function QuickView() {
   const handleSkuSelect = (value: string) => {
     setSelectedSku(value);
     
-    // Enhanced mock data with more variants for the same SKUs
+    // Enhanced mock  data with more variants for the same SKUs
     const mockProducts = [
       {
         shopifyId: '9646363279652',
