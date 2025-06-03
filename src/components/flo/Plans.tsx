@@ -9,7 +9,8 @@ import {
   Button,
   Icon,
   Divider,
-  Banner
+  Banner,
+  Toast
 } from '@shopify/polaris';
 import { CheckIcon, ChannelsIcon } from '@shopify/polaris-icons';
 
@@ -28,6 +29,10 @@ const Plans: React.FC = () => {
   // State to store the plan category
   const [planCategory, setPlanCategory] = useState<ShopifyPlanCategory>('BASIC');
   
+  // Add toast state
+  const [toastActive, setToastActive] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
   // Get the actual Shopify plan based on category
   const getShopifyPlan = (category: ShopifyPlanCategory): string => {
     return planCategoryMapping[category][0]; // Just use the first plan in each category
@@ -103,12 +108,36 @@ const Plans: React.FC = () => {
     }
   };
 
+  // Function to show toast message
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setToastActive(true);
+    
+    // Auto-dismiss toast after 3 seconds
+    setTimeout(() => {
+      setToastActive(false);
+    }, 3000);
+  };
+  
+  const handleToastDismiss = () => setToastActive(false);
+  
+  // Add function to handle button click
+  const handlePlanButtonClick = (planName: string, isCurrentPlan: boolean) => {
+    if (!isCurrentPlan) {
+      showToast(`Upgraded!`);  // Even shorter - just one word
+    }
+  };
+
   return (
     <Page
       title="Pricing Plans"
       subtitle="Choose the plan that best fits your business needs"
       fullWidth
     >
+      {toastActive && (
+        <Toast content={toastMessage} onDismiss={handleToastDismiss} duration={3000} />
+      )}
+      
       <BlockStack gap="500"> {/* Changed from 800 to 500 to match other pages */}
         {/* Demo controls - remove in production */}
         <Box padding="400" background="bg-surface-secondary" borderRadius="300">
@@ -137,26 +166,10 @@ const Plans: React.FC = () => {
           </BlockStack>
         </Box>
         
-        <div style={{ maxWidth: "800px", marginLeft: "0", marginRight: "auto" }}>
-          <InlineGrid columns={{ xs: 1, sm: 1, md: 2 }} gap="500">
+        <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+          <InlineGrid columns={{ xs: 1, sm: 1, md: 2 }} gap="500" alignItems="center">
             {plans.map((plan, index) => (
-              <div key={index} style={{ position: "relative", maxWidth: "300px" }}>
-                {!plan.isCurrentPlan && (
-                  <div style={{
-                    position: "absolute",
-                    top: "-10px",
-                    right: "20px",
-                    backgroundColor: "#2C6ECB",
-                    color: "white",
-                    padding: "4px 12px",
-                    borderRadius: "12px",
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    zIndex: 1
-                  }}>
-                    Most Popular
-                  </div>
-                )}
+              <div key={index} style={{ position: "relative", maxWidth: "300px", margin: "0 auto" }}>
                 <Card padding="500">
                   <BlockStack gap="400">
                     <Box paddingBlockEnd="400">
@@ -207,6 +220,7 @@ const Plans: React.FC = () => {
                         tone={plan.isCurrentPlan ? "success" : undefined}
                         disabled={plan.isCurrentPlan}
                         fullWidth
+                        onClick={() => handlePlanButtonClick(plan.name, plan.isCurrentPlan)}
                       >
                         {plan.isCurrentPlan ? 'Current Plan' : `Upgrade to ${plan.name}`}
                       </Button>
