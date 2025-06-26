@@ -1,0 +1,183 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Page,
+  BlockStack,
+  InlineGrid,
+  Box,
+  Card,
+  Text,
+  Button,
+  Icon,
+  Divider,
+  Banner,
+  Toast
+} from '@shopify/polaris';
+import { CheckIcon, ChannelsIcon } from '@shopify/polaris-icons';
+
+const Plans: React.FC = () => {
+  // Use a more descriptive plan type naming
+  type ShopifyPlanCategory = 'FREE' | 'BASIC' | 'ESTABLISHED' | 'HIGH_VOLUME';
+  
+  // Map plan categories to actual Shopify plans
+  const planCategoryMapping: Record<ShopifyPlanCategory, string[]> = {
+    'FREE': ['Shopify staff', 'Shopify partner', 'Shopify trial', 'Pause and Build'],
+    'BASIC': ['Basic Shopify'],
+    'ESTABLISHED': ['Shopify', 'Advanced Shopify'],
+    'HIGH_VOLUME': ['Shopify Plus']
+  };
+  
+  // State to store the plan category
+  const [planCategory, setPlanCategory] = useState<ShopifyPlanCategory>('BASIC');
+  
+  // Add toast state
+  const [toastActive, setToastActive] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  // Get the actual Shopify plan based on category
+  const getShopifyPlan = (category: ShopifyPlanCategory): string => {
+    return planCategoryMapping[category][0]; // Just use the first plan in each category
+  };
+  
+  // Function to determine plan prices based on plan category
+  const getPlanPricesByCategory = (category: ShopifyPlanCategory) => {
+    switch (category) {
+      case 'FREE':
+        return { basic: '$0', pro: '$0' };
+      case 'BASIC':
+        return { basic: '$5', pro: '$10' };
+      case 'ESTABLISHED':
+        return { basic: '$12', pro: '$24' };
+      case 'HIGH_VOLUME':
+        return { basic: '$20', pro: '$40' };
+      default:
+        return { basic: '$5', pro: '$10' };
+    }
+  };
+
+  // Get current pricing based on plan category
+  const planPrices = getPlanPricesByCategory(planCategory);
+  
+  // Define plan data with dynamically calculated prices
+  const plans = [
+    {
+      name: 'Basic Plan',
+      price: planPrices.basic,
+      isCurrentPlan: true,
+      features: [
+        { name: 'Unlimited SKUs', included: true },
+        { name: 'Unlimited Syncs', included: true },
+        { name: 'Sync History', included: true },
+        { name: '1-click Restock', included: true },
+        { name: 'Multi Location Support', included: true },
+        { name: 'Full Sync', included: true },
+      ],
+    }
+  ];
+  
+  // Function to show toast message
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setToastActive(true);
+    
+    // Auto-dismiss toast after 3 seconds
+    setTimeout(() => {
+      setToastActive(false);
+    }, 3000);
+  };
+  
+  const handleToastDismiss = () => setToastActive(false);
+  
+  // Add function to handle button click
+  const handlePlanButtonClick = (planName: string, isCurrentPlan: boolean) => {
+    if (!isCurrentPlan) {
+      showToast(`Upgraded!`);  // Even shorter - just one word
+    }
+  };
+
+  return (
+    <Page
+      title="Pricing Plans"
+      subtitle="Choose the plan that best fits your business needs"
+      fullWidth
+    >
+      {toastActive && (
+        <Toast content={toastMessage} onDismiss={handleToastDismiss} duration={3000} />
+      )}
+      
+      <BlockStack gap="500">
+        <div style={{ maxWidth: "400px", margin: "0 auto" }}>
+          <InlineGrid columns={{ xs: 1 }} gap="500" alignItems="center">
+            {plans.map((plan, index) => (
+              <div key={index} style={{ position: "relative", maxWidth: "300px", margin: "0 auto" }}>
+                <Card padding="500">
+                  <BlockStack gap="400">
+                    <Box paddingBlockEnd="400">
+                      <BlockStack gap="200">
+                        <Text as="h2" variant="headingLg" fontWeight="semibold" alignment="center">
+                          {plan.name}
+                        </Text>
+                        <Text as="p" variant="bodySm" tone="subdued" alignment="center">
+                          Monthly billing
+                        </Text>
+                        <Text as="p" variant="headingXl" fontWeight="bold" alignment="center">
+                          {plan.price}
+                          <Text as="span" variant="bodyMd">/month</Text>
+                        </Text>
+                      </BlockStack>
+                    </Box>
+
+                    <Divider />
+
+                    <BlockStack gap="300">
+                      {plan.features.map((feature, featureIndex) => (
+                        <div key={featureIndex} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ 
+                            width: '24px', 
+                            height: '24px', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            <Icon
+                              source={feature.included ? CheckIcon : ChannelsIcon}
+                              tone={feature.included ? 'success' : 'critical'}
+                            />
+                          </div>
+                          <Text as="span" variant="bodyMd" 
+                            tone={feature.included ? undefined : 'subdued'} 
+                            textDecorationLine={feature.included ? undefined : 'line-through'}>
+                            {feature.name}
+                          </Text>
+                        </div>
+                      ))}
+                    </BlockStack>
+
+                    <Box paddingBlockStart="400">
+                      <Button
+                        variant="primary"
+                        tone={plan.isCurrentPlan ? "success" : undefined}
+                        disabled={plan.isCurrentPlan}
+                        fullWidth
+                        onClick={() => handlePlanButtonClick(plan.name, plan.isCurrentPlan)}
+                      >
+                        {plan.isCurrentPlan ? 'Current Plan' : `Upgrade to ${plan.name}`}
+                      </Button>
+                    </Box>
+                  </BlockStack>
+                </Card>
+              </div>
+            ))}
+          </InlineGrid>
+        </div>
+        
+        {/* Add bottom spacing to match Shopify admin UI */}
+        <Box paddingBlockEnd="600">
+          {/* This provides the standard 24px bottom spacing using Polaris tokens */}
+        </Box>
+      </BlockStack>
+    </Page>
+  );
+};
+
+export default Plans;
