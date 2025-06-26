@@ -34,11 +34,16 @@ import FloHistory from './components/flo/History';
 import FlowInventory from './components/flo/Inventory';
 import FlowInventoryDetailView from './components/flo/DetailView';
 import QuickView from './components/flo/QuickView';
+import NeoHome from './components/neo/Home';
+import NeoPlans from './components/neo/Plans';
+import NeoAccounts from './components/neo/Accounts';
+import NeoSupport from './components/neo/Support';
 // Wrapper component to access location
 const AppContent: React.FC = () => {
   const [isNavigationOpen, setIsNavigationOpen] = useState<boolean>(true);
   const [isDualExpanded, setIsDualExpanded] = useState<boolean>(false);
   const [isFloExpanded, setIsFloExpanded] = useState<boolean>(false);
+  const [isNeoExpanded, setIsNeoExpanded] = useState<boolean>(false);
   const location = useLocation();
   
   // Check if URL contains '/dual/' or '/flo/' and set expanded state accordingly
@@ -49,6 +54,9 @@ const AppContent: React.FC = () => {
     if (location.pathname.includes('/flo/')) {
       setIsFloExpanded(true);
     }
+    if (location.pathname.includes('/neo/')) {
+      setIsNeoExpanded(true);
+    }
   }, [location.pathname]);
  
   const handleDualToggle = () => {
@@ -57,6 +65,10 @@ const AppContent: React.FC = () => {
 
   const handleFloToggle = () => {
     setIsFloExpanded(!isFloExpanded);
+  };
+
+  const handleNeoToggle = () => {
+    setIsNeoExpanded(!isNeoExpanded);
   };
 
   const navigationMarkup = (
@@ -75,6 +87,13 @@ const AppContent: React.FC = () => {
             icon: AppsIcon,
             onClick: handleFloToggle,
             expanded: isFloExpanded,
+            matches: false,
+          },
+         {
+            label: 'Neo',
+            icon: AppsIcon,
+            onClick: handleNeoToggle,
+            expanded: isNeoExpanded,
             matches: false,
           }
         ]}
@@ -147,6 +166,33 @@ const AppContent: React.FC = () => {
           ]}
         />
       )}
+      {isNeoExpanded && (
+        <Navigation.Section
+          title="Neo"
+          items={[
+            {
+              label: 'Home',
+              url: '/neo/home',
+              icon: HomeIcon,
+            },
+            {
+              label: 'Plans',
+              url: '/neo/plans',
+              icon: CreditCardIcon,
+            },
+            {
+              label: 'Accounts',
+              url: '/neo/accounts',
+              icon: PersonFilledIcon,
+            },
+            {
+              label: 'Support',
+              url: '/neo/support',
+              icon: ChartLineIcon,
+            },
+          ]}
+        />
+      )}
     </Navigation>
   );
 
@@ -183,6 +229,10 @@ const AppContent: React.FC = () => {
             <Route path="/flo/support" element={<FloSupport />} />
            <Route path="/flo/inventory-quick-view" element={<QuickView />} />
            <Route path="/flo/inventory-detail-view" element={<FlowInventoryDetailView />} />
+           <Route path="/neo/home" element={<NeoHome />} />
+           <Route path="/neo/plans" element={<NeoPlans />} />
+           <Route path="/neo/accounts" element={<NeoAccounts />} />
+           <Route path="/neo/support" element={<NeoSupport />} />
           </Routes>
     </Frame>
   );
