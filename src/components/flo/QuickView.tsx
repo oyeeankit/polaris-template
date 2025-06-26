@@ -97,8 +97,9 @@ export default function QuickView() {
   const [toastContent, setToastContent] = useState('');
   const [toastError, setToastError] = useState(false);
 
-  // Add this new function to show toast with auto-dismiss
+  // Update the showToast function to match Shopify's exact style
   const showToast = useCallback((content: string, isError: boolean = false) => {
+    // Shopify uses direct, action-oriented messages without any processing
     setToastContent(content);
     setToastError(isError);
     setToastActive(true);
@@ -115,31 +116,76 @@ export default function QuickView() {
       // Regular search
       if (sku.length < 3) {
         setSearchResults([]);
-        showToast('Enter SKU with minimum 3 characters', true);
+        showToast('Invalid SKU', true);
         return;
       }
 
-      if (location === 'warehouse1' && sku.toUpperCase() === 'ABC') {
-        setSearchResults([
-          {
-            shopifyId: '9646363279652',
-            variantId: '49865314894116',
-            sku: 'ABC123',
-            title: 'Stivali Texani in Camoscio Victoria - EBANO / 39',
-            inventory: 0,
-            image: "https://burst.shopifycdn.com/photos/leather-boots-with-yellow-laces_373x@2x.jpg",
-            date: '2025-05-20',
-          },
-        ]);
+      // Enhanced mock data with multiple variants
+      const mockProducts = [
+        {
+          shopifyId: '9646363279652',
+          variantId: '49865314894116',
+          sku: 'ABC123',
+          title: 'T TICCI Pickleball Paddles Set of 2, USAPA Approved Fiberglass Pickle Ball Paddles',
+          inventory: 5,
+          image: "https://burst.shopifycdn.com/photos/leather-boots-with-yellow-laces_373x@2x.jpg",
+          date: '2025-05-20',
+        },
+        {
+          shopifyId: '9646363279653',
+          variantId: '49865314894117',
+          sku: 'ABC123',
+          title: 'T TICCI Pickleball Paddles Set - Blue/Green Variant',
+          inventory: 3,
+          image: "https://burst.shopifycdn.com/photos/tennis-racket-on-court_373x@2x.jpg",
+          date: '2025-05-20',
+        },
+        {
+          shopifyId: '8011199873176',
+          variantId: '43120834511000',
+          sku: 'ABC456',
+          title: 'SAMSUNG 32-inch S3 (S39GD) FHD 2025',
+          inventory: 10,
+          image: "https://burst.shopifycdn.com/photos/widescreen-monitor_373x@2x.jpg",
+          date: '2025-05-22',
+        },
+        {
+          shopifyId: '8011199873177',
+          variantId: '43120834511001',
+          sku: 'ABC789',
+          title: 'K380 多工藍牙鍵盤 - 白色',
+          inventory: 15,
+          image: "https://burst.shopifycdn.com/photos/white-keyboard-top-down_373x@2x.jpg",
+          date: '2025-05-19',
+        },
+        {
+          shopifyId: '8011199873178',
+          variantId: '43120834511002',
+          sku: 'ABC321',
+          title: 'Organic Cotton T-Shirt - Blue / XL',
+          inventory: 8,
+          image: "https://burst.shopifycdn.com/photos/blue-t-shirt_373x@2x.jpg",
+          date: '2025-05-18',
+        }
+      ];
+
+      // Filter for exact SKU matches only
+      const exactMatches = mockProducts.filter(
+        product => product.sku.toUpperCase() === sku.toUpperCase()
+      );
+      
+      if (exactMatches.length > 0) {
+        setSearchResults(exactMatches);
+        showToast(`${exactMatches.length} items found`, false);
       } else {
         setSearchResults([]);
-        showToast('No results found', true);
+        showToast('No items found', true);
       }
     } else {
       // Advanced search
       if (advancedSku.length < 3) {
         setSearchResults([]);
-        showToast('Please provide SKU with minimum 3 characters', true);
+        showToast('SKU too short', true);
         return;
       }
 
@@ -149,7 +195,7 @@ export default function QuickView() {
           shopifyId: '9646363279652',
           variantId: '49865314894116',
           sku: 'ABC123',
-          title: 'T TICCI Pickleball Paddles Set of 2, USAPA Approved Fiberglass Pickle Ball Paddles with 4 Pickleballs, Lightweight Rackets for Adults & Kids, Includes Carry Bag & Net Bag for Men, Women, Beginners,',
+          title: 'T TICCI Pickleball Paddles Set of 2, USAPA Approved Fiberglass Pickle Ball Paddles',
           inventory: 5,
           image: "https://burst.shopifycdn.com/photos/leather-boots-with-yellow-laces_373x@2x.jpg",
           date: '2025-05-20',
@@ -225,7 +271,7 @@ export default function QuickView() {
         setSearchResults(filteredResults);
       } else {
         setSearchResults([]);
-        showToast('No results found', true);
+        showToast('No results', true);
       }
     }
   };
@@ -333,10 +379,10 @@ export default function QuickView() {
     
     if (exactMatches.length > 0) {
       setSearchResults(exactMatches);
-      showToast(`Found ${exactMatches.length} product${exactMatches.length > 1 ? 's' : ''} with SKU: ${value}`, false);
+      showToast(`${exactMatches.length} items found`, false);
     } else {
       setSearchResults([]);
-      showToast('No results found for the selected SKU', true);
+      showToast('No items found', true);
     }
   };
 
@@ -346,12 +392,12 @@ export default function QuickView() {
 
   const handleUpdateInventory = () => {
     if (!restockQty || isNaN(Number(restockQty))) {
-      showToast('Enter a valid quantity', true);
+      showToast('Invalid quantity', true);
       return;
     }
     
     if (searchResults.length === 0) {
-      showToast('No product selected', true);
+      showToast('No items selected', true);
       return;
     }
 
@@ -368,8 +414,8 @@ export default function QuickView() {
     
     setSearchResults(updatedResults);
     
-    // Update toast message to reflect the action
-    showToast(`Set inventory to ${newQuantity}`, false);
+    // Shopify-style toast - direct action statement
+    showToast('Inventory updated', false);
     
     setRestockQty(''); // Clear the input field after update
   };
