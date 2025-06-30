@@ -34,7 +34,6 @@ const Plans: React.FC = () => {
       isCurrentPlan: currentPlan === 'PAID',
       features: [
         { name: 'Unlimited Product Blocks', included: true },
-        { name: 'Email and Chat Support', included: true },
       ],
     }
   ];
@@ -70,11 +69,11 @@ const Plans: React.FC = () => {
       )}
       
       <BlockStack gap="500">
-        <div style={{ maxWidth: "500px", margin: "0 auto" }}>
+        <div style={{ maxWidth: "350px", margin: "0" }}>
           <div style={{ position: "relative", height: "100%" }}>
-            <Card padding="500">
-              <BlockStack gap="400">
-                <Box paddingBlockEnd="400">
+            <Card padding="400">
+              <BlockStack gap="300">
+                <Box paddingBlockEnd="300">
                   <BlockStack gap="200">
                     <Text as="h2" variant="headingLg" fontWeight="semibold" alignment="center">
                       {plans[0].name}
@@ -91,7 +90,7 @@ const Plans: React.FC = () => {
 
                 <Divider />
 
-                <BlockStack gap="300">
+                <BlockStack gap="200">
                   {plans[0].features.map((feature, featureIndex) => (
                     <div key={featureIndex} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <div style={{ 
@@ -114,7 +113,7 @@ const Plans: React.FC = () => {
                   ))}
                 </BlockStack>
 
-                <Box paddingBlockStart="400">
+                <Box paddingBlockStart="300">
                   <Button
                     variant="primary"
                     tone={plans[0].isCurrentPlan ? "success" : undefined}

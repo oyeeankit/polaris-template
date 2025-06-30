@@ -155,30 +155,27 @@ export default function Home() {
                           Add unique descriptions to each variant to better inform customers and increase sales. Simply create the metafield, then edit each variant's description directly in your Shopify product admin.
                         </Text>
                       </div>
+                      
+                      {/* Button Section moved here */}
+                      <div style={{ 
+                        display: 'flex', 
+                        flexDirection: isMobile ? 'column' : 'row',
+                        gap: '8px', 
+                        alignItems: isMobile ? 'stretch' : 'flex-start',
+                        justifyContent: 'flex-start',
+                        paddingTop: '8px'
+                      }}>
+                        <Button variant="secondary" size="medium" fullWidth={isMobile}>
+                          More info
+                        </Button>
+                        <Button variant="secondary" size="medium" fullWidth={isMobile}>
+                          Setup Metafield
+                        </Button>
+                        <Button variant="primary" onClick={handleAddBlock} size="medium" fullWidth={isMobile}>
+                          View/Edit block
+                        </Button>
+                      </div>
                     </BlockStack>
-                  </div>
-
-                  {/* Button Section */}
-                  <div style={{ 
-                    flexShrink: 0, 
-                    display: 'flex', 
-                    flexDirection: isMobile ? 'row' : 'column',
-                    gap: '12px', 
-                    alignItems: isMobile ? 'center' : 'flex-start',
-                    justifyContent: isMobile ? 'center' : 'flex-start',
-                    paddingTop: isMobile ? '16px' : '0',
-                    width: isMobile ? '100%' : 'auto'
-                  }}>
-                    <div style={{ minWidth: '140px' }}>
-                      <Button variant="secondary" size="medium" fullWidth>
-                        Create Metafield
-                      </Button>
-                    </div>
-                    <div style={{ minWidth: '140px' }}>
-                      <Button variant="primary" onClick={handleAddBlock} size="medium" fullWidth>
-                        Add block
-                      </Button>
-                    </div>
                   </div>
                 </div>
               </Box>
@@ -330,30 +327,27 @@ export default function Home() {
                           Boost sales by showcasing images and videos unique to each variant. Create the metafield, then easily add specific media for each variant in your Shopify product admin.
                         </Text>
                       </div>
+                      
+                      {/* Button Section moved here */}
+                      <div style={{ 
+                        display: 'flex', 
+                        flexDirection: isMobile ? 'column' : 'row',
+                        gap: '8px', 
+                        alignItems: isMobile ? 'stretch' : 'flex-start',
+                        justifyContent: 'flex-start',
+                        paddingTop: '8px'
+                      }}>
+                        <Button variant="secondary" size="medium" fullWidth={isMobile}>
+                          More info
+                        </Button>
+                        <Button variant="secondary" size="medium" fullWidth={isMobile}>
+                          Setup Metafield
+                        </Button>
+                        <Button variant="primary" onClick={handleAddBlock} size="medium" fullWidth={isMobile}>
+                          View/Edit block
+                        </Button>
+                      </div>
                     </BlockStack>
-                  </div>
-
-                  {/* Button Section */}
-                  <div style={{ 
-                    flexShrink: 0, 
-                    display: 'flex', 
-                    flexDirection: isMobile ? 'row' : 'column',
-                    gap: '12px', 
-                    alignItems: isMobile ? 'center' : 'flex-start',
-                    justifyContent: isMobile ? 'center' : 'flex-start',
-                    paddingTop: isMobile ? '16px' : '0',
-                    width: isMobile ? '100%' : 'auto'
-                  }}>
-                    <div style={{ minWidth: '140px' }}>
-                      <Button variant="secondary" size="medium" fullWidth>
-                        Create Metafield
-                      </Button>
-                    </div>
-                    <div style={{ minWidth: '140px' }}>
-                      <Button variant="primary" onClick={handleAddBlock} size="medium" fullWidth>
-                        Add block
-                      </Button>
-                    </div>
                   </div>
                 </div>
               </Box>
