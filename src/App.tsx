@@ -38,12 +38,16 @@ import NeoHome from './components/neo/Home';
 import NeoPlans from './components/neo/Plans';
 import NeoAccounts from './components/neo/Accounts';
 import NeoSupport from './components/neo/Support';
+import AmazonHome from './components/amazon/Home';
+import AmazonPlans from './components/amazon/Plans';
+import AmazonSupport from './components/amazon/Support';
 // Wrapper component to access location
 const AppContent: React.FC = () => {
   const [isNavigationOpen, setIsNavigationOpen] = useState<boolean>(true);
   const [isDualExpanded, setIsDualExpanded] = useState<boolean>(false);
   const [isFloExpanded, setIsFloExpanded] = useState<boolean>(false);
   const [isNeoExpanded, setIsNeoExpanded] = useState<boolean>(false);
+  const [isAmazonExpanded, setIsAmazonExpanded] = useState<boolean>(false);
   const location = useLocation();
   
   // Check if URL contains '/dual/' or '/flo/' and set expanded state accordingly
@@ -57,6 +61,9 @@ const AppContent: React.FC = () => {
     if (location.pathname.includes('/neo/')) {
       setIsNeoExpanded(true);
     }
+    if (location.pathname.includes('/amazon/')) {
+      setIsAmazonExpanded(true);
+    }
   }, [location.pathname]);
  
   const handleDualToggle = () => {
@@ -69,6 +76,10 @@ const AppContent: React.FC = () => {
 
   const handleNeoToggle = () => {
     setIsNeoExpanded(!isNeoExpanded);
+  };
+
+  const handleAmazonToggle = () => {
+    setIsAmazonExpanded(!isAmazonExpanded);
   };
 
   const navigationMarkup = (
@@ -94,6 +105,13 @@ const AppContent: React.FC = () => {
             icon: AppsIcon,
             onClick: handleNeoToggle,
             expanded: isNeoExpanded,
+            matches: false,
+          },
+         {
+            label: 'Amazon',
+            icon: AppsIcon,
+            onClick: handleAmazonToggle,
+            expanded: isAmazonExpanded,
             matches: false,
           }
         ]}
@@ -193,6 +211,28 @@ const AppContent: React.FC = () => {
           ]}
         />
       )}
+      {isAmazonExpanded && (
+        <Navigation.Section
+          title="Amazon"
+          items={[
+            {
+              label: 'Home',
+              url: '/amazon/home',
+              icon: HomeIcon,
+            },
+            {
+              label: 'Plans',
+              url: '/amazon/plans',
+              icon: CreditCardIcon,
+            },
+            {
+              label: 'Support',
+              url: '/amazon/support',
+              icon: ChartLineIcon,
+            },
+          ]}
+        />
+      )}
     </Navigation>
   );
 
@@ -233,6 +273,9 @@ const AppContent: React.FC = () => {
            <Route path="/neo/plans" element={<NeoPlans />} />
            <Route path="/neo/accounts" element={<NeoAccounts />} />
            <Route path="/neo/support" element={<NeoSupport />} />
+           <Route path="/amazon/home" element={<AmazonHome />} />
+           <Route path="/amazon/plans" element={<AmazonPlans />} />
+           <Route path="/amazon/support" element={<AmazonSupport />} />
           </Routes>
     </Frame>
   );
