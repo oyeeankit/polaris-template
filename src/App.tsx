@@ -41,6 +41,7 @@ import NeoSupport from './components/neo/Support';
 import AmazonHome from './components/amazon/Home';
 import AmazonPlans from './components/amazon/Plans';
 import AmazonSupport from './components/amazon/Support';
+import AmazonSettings from './components/amazon/Settings';
 // Wrapper component to access location
 const AppContent: React.FC = () => {
   const [isNavigationOpen, setIsNavigationOpen] = useState<boolean>(true);
@@ -221,6 +222,11 @@ const AppContent: React.FC = () => {
               icon: HomeIcon,
             },
             {
+              label: 'Settings',
+              url: '/amazon/settings',
+              icon: SettingsIcon,
+            },
+            {
               label: 'Plans',
               url: '/amazon/plans',
               icon: CreditCardIcon,
@@ -274,6 +280,7 @@ const AppContent: React.FC = () => {
            <Route path="/neo/accounts" element={<NeoAccounts />} />
            <Route path="/neo/support" element={<NeoSupport />} />
            <Route path="/amazon/home" element={<AmazonHome />} />
+           <Route path="/amazon/settings" element={<AmazonSettings />} />
            <Route path="/amazon/plans" element={<AmazonPlans />} />
            <Route path="/amazon/support" element={<AmazonSupport />} />
           </Routes>

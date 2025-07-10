@@ -1,29 +1,32 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   Page,
   Layout,
   Card,
-  Select,
-  Tabs,
-  TextField,
-  IndexTable,
-  Button,
-  Badge,
-  Box,
-  Text,
   BlockStack,
-  InlineStack,
-  Grid,
+  Text,
+  Button,
   Modal,
-  FormLayout,
-  Checkbox,
-  Pagination,
+  IndexTable,
+  Badge,
+  ButtonGroup,
+  TextField,
+  Tabs,
+  Select,
   Filters,
-  ResourceList,
+  Checkbox,
+  FormLayout,
+  InlineStack,
   Thumbnail,
-  Icon
+  Pagination,
+  useBreakpoints,
+  Box,
+  Icon,
+  ActionList,
+  Popover,
+  Toast
 } from '@shopify/polaris';
-import { EditIcon, XIcon, SearchIcon, AlertBubbleIcon } from '@shopify/polaris-icons';
+import { EditIcon, XIcon, SearchIcon, AlertBubbleIcon, SaveIcon } from '@shopify/polaris-icons';
 
 // Define product types
 type AmazonDomain = 'amazon.com' | 'amazon.ca' | 'amazon.co.uk' | 'amazon.de' | 'amazon.fr' | 
@@ -53,6 +56,27 @@ const createDefaultRegionStatus = (): RegionStatus => {
   return status;
 };
 
+// Helper function to get region-specific data for a product and domain
+const getRegionSpecificData = (
+  product: Product, 
+  domain: string
+): { asin: string; keywords: string; customLink: string; status: ProductStatus } => {
+  // Check if product has regionData property and data for this domain
+  if ((product as any).regionData && (product as any).regionData[domain]) {
+    return (product as any).regionData[domain];
+  }
+  
+  // Otherwise, fall back to global product data
+  return {
+    asin: product.asin,
+    keywords: product.keywords,
+    customLink: product.customLink,
+    status: 'regionStatus' in product 
+      ? product.regionStatus[domain as AmazonDomain] || 'inactive' 
+      : product.status
+  };
+};
+
 // Product with region-specific status
 interface ProductWithRegionStatus {
   id: string;
@@ -79,6 +103,25 @@ interface LegacyProduct {
 
 type Product = ProductWithRegionStatus | LegacyProduct;
 
+// Enhanced product interface with region-specific data
+interface RegionSpecificData {
+  asin: string;
+  keywords: string;
+  customLink: string;
+  status: ProductStatus;
+}
+
+// Enhanced product that stores data per region
+interface ProductWithRegionData {
+  id: string;
+  title: string;
+  image: string;
+  clicks: number;
+  regionData: {
+    [domain in AmazonDomain]?: RegionSpecificData;
+  };
+}
+
 const AmazonBuyButtonDashboard = () => {
   const [selectedAmazonDomain, setSelectedAmazonDomain] = useState('amazon.com');
   const [selectedTab, setSelectedTab] = useState(0);
@@ -98,12 +141,53 @@ const AmazonBuyButtonDashboard = () => {
   const [selectedCollection, setSelectedCollection] = useState('');
   const [selectedSku, setSelectedSku] = useState('');
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+  const [filterPopoverActive, setFilterPopoverActive] = useState(false);
+  
+  // Toast state and handlers
+  const [toastActive, setToastActive] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastError, setToastError] = useState(false);
+  
+  // Function to show toast message
+  const showToast = useCallback((message: string, isError = false) => {
+    setToastMessage(message);
+    setToastError(isError);
+    setToastActive(true);
+    
+    // Auto-dismiss toast after 3 seconds
+    setTimeout(() => {
+      setToastActive(false);
+    }, 3000);
+  }, []);
+  
+  const handleToastDismiss = useCallback(() => setToastActive(false), []);
+  
+  // Add view modal states
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  
+  // State for inline editing fields in the view modal - region-specific data
+  const [editingFields, setEditingFields] = useState<{
+    [domain: string]: {
+      asin: string;
+      keywords: string;
+      customLink: string;
+    }
+  }>({});
+  
+  // Single editForm state declaration
   const [editForm, setEditForm] = useState({
     asin: '',
     customLink: '',
     keywords: '',
     hideOtherBuyButtons: false,
     improveSearchRanking: false,
+  });
+  
+  const [showWelcomeCard, setShowWelcomeCard] = useState(() => {
+    // Check localStorage to see if user has previously hidden the welcome card
+    const storedPreference = localStorage.getItem('linkr_hideWelcomeCard');
+    return storedPreference !== 'true'; // Show card by default unless explicitly hidden
   });
   
   // Sample available products for selection with additional filter properties
@@ -130,7 +214,7 @@ const AmazonBuyButtonDashboard = () => {
   const [products, setProducts] = useState<Product[]>([
     {
       id: '1',
-      title: 'Trendy Queen Womens Short Sleeve T Shirts',
+      title: 'Trendy Queen Womens Short Sleeve T Shirts rt Sleeve T Shirts  ',
       image: 'https://example.com/image1.jpg',
       clicks: 0,
       asin: '-',
@@ -322,17 +406,29 @@ const AmazonBuyButtonDashboard = () => {
     },
   ]);
 
+  // Add this state declaration near your other state declarations (around line 69)
+  const [activeEditingCell, setActiveEditingCell] = useState<string | null>(null);
+
   // Handle status toggle based on the selected Amazon domain
   const handleStatusToggle = (productId: string) => {
+    let updatedStatus = '';
+    let productTitle = '';
+    
     setProducts(prevProducts => 
       prevProducts.map(product => {
         if (product.id === productId) {
+          // Store product title for toast message
+          productTitle = product.title;
+          
           if ('regionStatus' in product) {
             // Safe type assertion for selectedAmazonDomain as a key of RegionStatus
             const domain = selectedAmazonDomain as AmazonDomain;
             // Get current status, defaulting to inactive if not set
             const currentStatus = product.regionStatus[domain] || 'inactive';
             const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            
+            // Store the new status for toast message
+            updatedStatus = newStatus;
             
             return { 
               ...product, 
@@ -343,89 +439,404 @@ const AmazonBuyButtonDashboard = () => {
             } as ProductWithRegionStatus;
           } else {
             // Legacy status field for backward compatibility
+            const newStatus = product.status === 'active' ? 'inactive' : 'active';
+            
+            // Store the new status for toast message
+            updatedStatus = newStatus;
+            
             return { 
               ...product, 
-              status: product.status === 'active' ? 'inactive' : 'active' 
+              status: newStatus 
             } as LegacyProduct;
           }
         }
         return product;
       })
     );
+    
+    // Show toast message after status change
+    const domain = selectedAmazonDomain.replace('amazon.', '');
+    const statusText = updatedStatus === 'active' ? 'enabled' : 'disabled';
+    showToast(`Product ${statusText} for ${domain}`, false);
   };
 
   // Handle edit product
   const handleEditProduct = (product: any) => {
     setEditingProduct(product);
+    
+    // Get region-specific data for the currently selected domain
+    const regionData = getRegionSpecificData(product, selectedAmazonDomain);
+    
+    // Check if keywords exist for this region to set improveSearchRanking checkbox
+    const hasKeywords = regionData.keywords !== '-' && regionData.keywords !== '';
+    
     setEditForm({
-      asin: product.asin === '-' ? '' : product.asin,
-      customLink: product.customLink === '-' ? '' : product.customLink,
-      keywords: product.keywords === '-' ? '' : product.keywords,
+      asin: regionData.asin === '-' ? '' : regionData.asin,
+      customLink: regionData.customLink === '-' ? '' : regionData.customLink,
+      keywords: regionData.keywords === '-' ? '' : regionData.keywords,
       hideOtherBuyButtons: false,
-      improveSearchRanking: true,
+      improveSearchRanking: hasKeywords, // Enable if keywords exist
     });
     setEditModalOpen(true);
   };
+  
+  // Add view product handler with region-specific data support
+  const handleViewProduct = (product: Product) => {
+    setViewingProduct(product);
+    setViewModalOpen(true);
+    
+    // Initialize editing fields for all domains with region-specific data
+    const initialFields: { [key: string]: { asin: string; keywords: string; customLink: string } } = {};
+    
+    // For each domain, initialize with the appropriate region-specific data
+    domainOptions.forEach(domain => {
+      // Get region-specific data using our helper
+      const regionData = getRegionSpecificData(product, domain.value);
+      
+      // Set the initial field values, converting '-' to empty string for better UX
+      initialFields[domain.value] = {
+        asin: regionData.asin === '-' ? '' : regionData.asin,
+        keywords: regionData.keywords === '-' ? '' : regionData.keywords,
+        customLink: regionData.customLink === '-' ? '' : regionData.customLink
+      };
+    });
+    
+    setEditingFields(initialFields);
+    setOriginalEditingFields(JSON.parse(JSON.stringify(initialFields)));
+    setHasUnsavedChanges(false);
+  };
 
-  // Handle save product with region-specific status updates
-  const handleSaveProduct = (enableProduct = false) => {
-    if (editingProduct) {
-      setProducts(prevProducts =>
+  // Update close view modal handler
+  const handleCloseViewModal = () => {
+    // If there are unsaved changes, show a confirmation dialog
+    if (hasUnsavedChanges) {
+      if (window.confirm("You have unsaved changes. Are you sure you want to close?")) {
+        setViewModalOpen(false);
+        setViewingProduct(null);
+        setEditingFields({});
+        setActiveEditingCell(null);
+        setHasUnsavedChanges(false);
+      }
+    } else {
+      setViewModalOpen(false);
+      setViewingProduct(null);
+      setEditingFields({});
+      setActiveEditingCell(null);
+    }
+  };
+  
+  // Add state for tracking changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [originalEditingFields, setOriginalEditingFields] = useState<{
+    [key: string]: {
+      asin: string;
+      keywords: string;
+      customLink: string;
+    }
+  }>({});
+  
+  // Add a custom inline editable cell component that only shows input when active
+  const InlineEditableCell = ({ 
+    value, 
+    onChange, 
+    placeholder, 
+    minWidth = '120px',
+    isActive = false,
+    onFocus,
+    onBlur
+  }: {
+    value: string;
+    onChange: (value: string) => void;
+    placeholder: string;
+    minWidth?: string;
+    isActive?: boolean;
+    onFocus?: () => void;
+    onBlur?: () => void;
+  }) => {
+    // Use fixed dimensions to ensure absolutely no layout shifts
+    const commonStyles = {
+      minWidth,
+      maxWidth: minWidth,
+      width: minWidth,
+      height: '32px', // Reduced height
+      padding: '0px',
+      margin: '0px',
+      boxSizing: 'border-box' as 'border-box',
+      borderRadius: '4px',
+      display: 'flex',
+      alignItems: 'center',
+      overflow: 'hidden',
+      position: 'relative' as 'relative',
+    };
+
+    if (isActive) {
+      return (
+        <div style={{
+          ...commonStyles,
+          border: '1px solid #008060',
+        }}>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            autoComplete="off"
+            autoFocus
+            onBlur={onBlur}
+            style={{
+              width: '100%',
+              height: '30px', // Reduced height to fit inside container
+              padding: '0 6px', // Reduced padding
+              margin: '0px',
+              border: 'none',
+              outline: 'none',
+              background: 'transparent',
+              fontSize: '13px', // Smaller font size
+              lineHeight: '1.4',
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
+      );
+    } else {
+      return (
+        <div 
+          style={{
+            ...commonStyles,
+            cursor: 'pointer',
+            border: '1px solid transparent',
+            padding: '0 6px', // Reduced padding
+          }}
+          onClick={onFocus}
+        >
+          <div style={{ 
+            width: '100%', 
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            fontSize: '13px', // Smaller font size
+          }}>
+            {value || <span style={{ color: '#8C9196' }}>{placeholder}</span>}
+          </div>
+        </div>
+      );
+    }
+  };
+
+  // Update inline field updates to track changes
+  const handleInlineFieldUpdate = (domain: string, field: 'asin' | 'keywords' | 'customLink', value: string) => {
+    setEditingFields(prev => ({
+      ...prev,
+      [domain]: {
+        ...prev[domain],
+        [field]: value
+      }
+    }));
+    
+    setHasUnsavedChanges(true);
+  };
+
+  // Save changes handler with region-specific data support
+  const handleSaveViewChanges = () => {
+    if (viewingProduct) {
+      // Update products with region-specific data
+      setProducts(prevProducts => 
         prevProducts.map(product => {
-          if (product.id === editingProduct.id) {
-            // First, update basic product fields
-            const updatedProduct = {
-              ...product,
-              asin: editForm.asin || '-',
-              customLink: editForm.customLink || '-',
-              keywords: editForm.keywords || '-',
-            };
+          if (product.id === viewingProduct.id) {
+            // Create a new product object with the updated values
+            const updatedProduct = { ...product };
             
-            // For legacy products, convert to the new format with regionStatus
-            if (!('regionStatus' in updatedProduct)) {
-              const regionStatus = createDefaultRegionStatus();
-              // Copy the old status to the currently selected region
-              regionStatus[selectedAmazonDomain as AmazonDomain] = updatedProduct.status;
-              
-              const convertedProduct = {
-                ...updatedProduct,
-                regionStatus,
-              } as unknown as ProductWithRegionStatus;
-              
-              // Remove the old status property
-              delete (convertedProduct as any).status;
-              
-              // If enable flag is set, set the current region to active
-              if (enableProduct) {
-                convertedProduct.regionStatus[selectedAmazonDomain as AmazonDomain] = 'active';
-              }
-              
-              return convertedProduct;
-            } 
-            // For products already using regionStatus
-            else {
-              // If enable flag is set, update the status for the current region only
-              if (enableProduct) {
-                return {
-                  ...updatedProduct,
-                  regionStatus: {
-                    ...updatedProduct.regionStatus,
-                    [selectedAmazonDomain as AmazonDomain]: 'active' as ProductStatus
-                  }
-                } as ProductWithRegionStatus;
-              }
-              
-              return updatedProduct as ProductWithRegionStatus;
+            // Convert the existing product to support region-specific data if needed
+            if (!('regionData' in updatedProduct)) {
+              // Add regionData property to store region-specific information
+              (updatedProduct as any).regionData = {};
             }
+            
+            // For each domain in the editing fields, update the corresponding region data
+            Object.keys(editingFields).forEach(domain => {
+              const domainData = editingFields[domain];
+              
+              // Ensure regionData exists for this domain
+              if (!(updatedProduct as any).regionData[domain]) {
+                (updatedProduct as any).regionData[domain] = {};
+              }
+              
+              // Always get the latest status from the viewing product's regionStatus first (which gets updated by toggle)
+              // and then fall back to regionData if needed
+              const status = 'regionStatus' in viewingProduct 
+                ? viewingProduct.regionStatus[domain as AmazonDomain] || 'inactive'
+                : (viewingProduct as any).regionData && 
+                  (viewingProduct as any).regionData[domain] && 
+                  (viewingProduct as any).regionData[domain].status
+                  ? (viewingProduct as any).regionData[domain].status
+                  : 'inactive';
+                
+              // Update the region-specific data
+              (updatedProduct as any).regionData[domain] = {
+                asin: domainData.asin || '-',
+                keywords: domainData.keywords || '-',
+                customLink: domainData.customLink || '-',
+                status: status
+              };
+            });
+            
+            // Also update region status if available from the viewing product
+            if ('regionStatus' in viewingProduct) {
+              if (!('regionStatus' in updatedProduct)) {
+                (updatedProduct as any).regionStatus = {};
+              }
+              
+              // Make sure to copy ALL region statuses from the viewing product
+              (updatedProduct as any).regionStatus = {
+                ...(updatedProduct as any).regionStatus,
+                ...viewingProduct.regionStatus
+              };
+              
+              console.log('Saving updated region statuses:', viewingProduct.regionStatus);
+            }
+            
+            // Keep global values as the currently selected domain's values for backward compatibility
+            const currentDomain = selectedAmazonDomain;
+            const currentDomainData = editingFields[currentDomain];
+            if (currentDomainData) {
+              updatedProduct.asin = currentDomainData.asin || '-';
+              updatedProduct.keywords = currentDomainData.keywords || '-';
+              updatedProduct.customLink = currentDomainData.customLink || '-';
+            }
+            
+            return updatedProduct;
           }
           return product;
         })
       );
-    }
-    setEditModalOpen(false);
-    setEditingProduct(null);
-  };
 
+      // Update viewing product state with current domain's values
+      const currentDomain = selectedAmazonDomain;
+      const currentDomainData = editingFields[currentDomain];
+      
+      const updatedViewingProduct = {
+        ...viewingProduct,
+        asin: currentDomainData?.asin || '-',
+        keywords: currentDomainData?.keywords || '-',
+        customLink: currentDomainData?.customLink || '-',
+      };
+      
+      // Add regionData property using type assertion
+      (updatedViewingProduct as any).regionData = {
+        ...((viewingProduct as any).regionData || {}),
+        // Update regionData for all domains
+        ...Object.fromEntries(
+          Object.entries(editingFields).map(([domain, data]) => [
+            domain,
+            {
+              asin: data.asin || '-',
+              keywords: data.keywords || '-',
+              customLink: data.customLink || '-',
+              // Always use the most up-to-date status from regionStatus (which gets updated by toggle)
+              status: 'regionStatus' in viewingProduct ? 
+                viewingProduct.regionStatus[domain as AmazonDomain] || 'inactive' : 
+                'inactive'
+            }
+          ])
+        )
+      };
+      
+      setViewingProduct(updatedViewingProduct);
+      
+      // Reset changed state
+      setHasUnsavedChanges(false);
+      setOriginalEditingFields(JSON.parse(JSON.stringify(editingFields)));
+      
+      // Show success toast message
+      showToast("Product details saved", false);
+    }
+  };
+  
+  // Save product handler for the edit modal
+  const handleSaveProduct = (enableProduct: boolean) => {
+    if (editingProduct) {
+      setProducts(prevProducts => 
+        prevProducts.map(product => {
+          if (product.id === editingProduct.id) {
+            // Create updated product
+            const updatedProduct = { ...product };
+            
+            // Convert the existing product to support region-specific data if needed
+            if (!('regionData' in updatedProduct)) {
+              // Add regionData property to store region-specific information
+              (updatedProduct as any).regionData = {};
+            }
+            
+            // Ensure regionData exists for the current domain
+            const domain = selectedAmazonDomain;
+            if (!(updatedProduct as any).regionData[domain]) {
+              (updatedProduct as any).regionData[domain] = {
+                // Initialize with existing global values if available
+                asin: updatedProduct.asin || '-',
+                keywords: updatedProduct.keywords || '-',
+                customLink: updatedProduct.customLink || '-',
+                status: 'inactive'
+              };
+            }
+            
+            // Update the region-specific data for the current domain only
+            (updatedProduct as any).regionData[domain] = {
+              // Keep existing values for properties not edited
+              ...(updatedProduct as any).regionData[domain],
+              asin: editForm.asin || '-',
+              keywords: editForm.keywords || '-',
+              customLink: editForm.customLink || '-',
+              // Preserve existing status or default to inactive
+              status: 'regionStatus' in updatedProduct ? 
+                updatedProduct.regionStatus[domain as AmazonDomain] || 'inactive' : 
+                ((updatedProduct as any).regionData[domain]?.status || 'inactive')
+            };
+            
+            // We're fully region-specific now, don't update global fields
+            
+            // Update status if enableProduct is true
+            if (enableProduct) {
+              // Ensure regionStatus exists
+              if (!('regionStatus' in updatedProduct)) {
+                (updatedProduct as any).regionStatus = {};
+              }
+              
+              // Update regionStatus for the current domain
+              (updatedProduct as any).regionStatus = {
+                ...(updatedProduct as any).regionStatus,
+                [selectedAmazonDomain as AmazonDomain]: 'active'
+              };
+              
+              // Also update in region data
+              if ((updatedProduct as any).regionData && (updatedProduct as any).regionData[selectedAmazonDomain]) {
+                (updatedProduct as any).regionData[selectedAmazonDomain].status = 'active';
+              }
+            }
+            
+            return updatedProduct;
+          }
+          return product;
+        })
+      );
+      
+      // Close modal
+      setEditModalOpen(false);
+      setEditingProduct(null);
+      
+      // Reset form
+      setEditForm({
+        asin: '',
+        customLink: '',
+        keywords: '',
+        hideOtherBuyButtons: false,
+        improveSearchRanking: false,
+      });
+      
+      // Show success toast
+      showToast(enableProduct ? "Product updated and enabled" : "Product updated", false);
+    }
+  };
+  
   const domainOptions = [
     { label: 'United States', value: 'amazon.com' },
     { label: 'Canada', value: 'amazon.ca' },
@@ -456,14 +867,34 @@ const AmazonBuyButtonDashboard = () => {
 
   // Helper function to get product status based on selected domain
   const getProductStatus = (product: Product): ProductStatus => {
+    // Try to get region-specific status first
     if ('regionStatus' in product) {
       const domain = selectedAmazonDomain as AmazonDomain;
       // If the region isn't defined for this product, return inactive by default
       return product.regionStatus[domain] || 'inactive';
-    } else {
-      // Legacy support for old product format
-      return product.status;
+    } 
+    // If product has regionData and this domain has a status
+    else if ((product as any).regionData && 
+             (product as any).regionData[selectedAmazonDomain] &&
+             (product as any).regionData[selectedAmazonDomain].status) {
+      return (product as any).regionData[selectedAmazonDomain].status;
+    } 
+    // Legacy support for old product format
+    else {
+      return (product as LegacyProduct).status;
     }
+  };
+  
+  // Helper function to get region-specific field value based on selected domain
+  const getRegionSpecificField = (product: Product, field: 'asin' | 'keywords' | 'customLink'): string => {
+    // If product has regionData and this domain has the field, use that
+    if ((product as any).regionData && 
+        (product as any).regionData[selectedAmazonDomain] &&
+        (product as any).regionData[selectedAmazonDomain][field]) {
+      return (product as any).regionData[selectedAmazonDomain][field];
+    }
+    // Otherwise fall back to global value
+    return product[field];
   };
 
   const filteredProducts = useMemo(() => {
@@ -594,11 +1025,9 @@ const AmazonBuyButtonDashboard = () => {
     });
   };
 
-  // Removed useIndexResourceState hook as its values are unused
-
   // Prevent background scroll when modal is open
   useEffect(() => {
-    if (selectProductsModalOpen) {
+    if (selectProductsModalOpen || viewModalOpen) {
       // Store current scroll position
       const scrollY = window.scrollY;
       document.body.style.position = 'fixed';
@@ -614,7 +1043,116 @@ const AmazonBuyButtonDashboard = () => {
         window.scrollTo(0, parseInt(scrollY || '0') * -1);
       }
     }
+  }, [selectProductsModalOpen, viewModalOpen]);
+
+  // Toggle modal function using useCallback
+  const toggleProductModal = useCallback(() => {
+    setSelectProductsModalOpen((prev) => !prev);
+    if (!selectProductsModalOpen) {
+      // Reset states when opening
+      setSelectedProductsForAdd([]);
+      setProductSearchValue('');
+      setSearchBy('all');
+      clearAllFilters();
+    }
   }, [selectProductsModalOpen]);
+
+  // Handle single product selection (like the pop code example)
+  const handleSelectSingleProduct = useCallback((product: any) => {
+    const newProduct = {
+      id: `new_${Date.now()}_${product.id}`,
+      title: product.name,
+      image: product.image,
+      clicks: Math.floor(Math.random() * 100),
+      asin: '-',
+      keywords: '-',
+      customLink: '-',
+      regionStatus: createDefaultRegionStatus()
+    };
+    
+    setProducts(prev => [newProduct, ...prev]);
+    setSelectProductsModalOpen(false);
+    setSelectedProductsForAdd([]);
+    setProductSearchValue('');
+    setSearchBy('all');
+    clearAllFilters();
+    
+    // Show success toast
+    showToast(`${product.name} added`, false);
+  }, [showToast]);
+  
+  // Add this function to reset the welcome card
+  const resetWelcomeCard = () => {
+    localStorage.removeItem('linkr_hideWelcomeCard');
+    setShowWelcomeCard(true);
+  };
+
+  // Cell focus and blur handlers
+  const handleCellFocus = (domain: string, field: 'asin' | 'keywords' | 'customLink') => {
+    setActiveEditingCell(`${domain}-${field}`);
+  };
+
+  const handleCellBlur = () => {
+    // Small delay to allow the onChange to complete before losing focus
+    setTimeout(() => {
+      setActiveEditingCell(null);
+    }, 100);
+  };
+
+  // Region status toggle handler
+  const handleRegionStatusToggle = (productId: string, domain: AmazonDomain) => {
+    if (viewingProduct) {
+      // Create a copy of the product's regionStatus
+      const updatedRegionStatus = viewingProduct && 'regionStatus' in viewingProduct 
+        ? { ...viewingProduct.regionStatus } 
+        : {};
+      
+      // Get the current status
+      const currentStatus = updatedRegionStatus[domain] || 'inactive';
+      
+      // Toggle the status for the specified domain
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      updatedRegionStatus[domain] = newStatus;
+      
+      // Create updated viewing product
+      const updatedViewingProduct = {
+        ...viewingProduct,
+        regionStatus: updatedRegionStatus
+      };
+      
+      // Also update the regionData to keep everything in sync
+      if (!('regionData' in updatedViewingProduct)) {
+        (updatedViewingProduct as any).regionData = {};
+      }
+      
+      // Ensure regionData exists for this domain
+      if (!((updatedViewingProduct as any).regionData[domain])) {
+        (updatedViewingProduct as any).regionData[domain] = {
+          asin: viewingProduct.asin || '-',
+          keywords: viewingProduct.keywords || '-',
+          customLink: viewingProduct.customLink || '-',
+          status: 'inactive'
+        };
+      }
+      
+      // Update the status in regionData
+      (updatedViewingProduct as any).regionData[domain].status = updatedRegionStatus[domain];
+      
+      // Update the product in the products state
+      setViewingProduct(updatedViewingProduct);
+      
+      // Update the product in the products array
+      setProducts(prevProducts => {
+        return prevProducts.map(p => p.id === productId ? updatedViewingProduct : p);
+      });
+      
+      // Show toast message
+      const statusText = newStatus === 'active' ? 'enabled' : 'disabled';
+      showToast(`Product ${statusText} for ${domain}`, false);
+    }
+  };
+
+  // Toast state and handlers are defined at the top of the component
 
   return (
     <Page title="Linkr Dashboard">
@@ -623,70 +1161,87 @@ const AmazonBuyButtonDashboard = () => {
           <BlockStack gap="500">
             
             {/* App Information */}
-            <Card>
-              <BlockStack gap="400">
-                <Text as="h2" variant="headingMd" fontWeight="semibold">
-                  🎉 Welcome to Linkr!
-                </Text>
-                <BlockStack gap="300">
-                  <Text as="p" variant="bodyMd">
-                    Linkr blocks have been automatically added to your Shopify theme. You can find these app blocks in your theme editor and place them anywhere you like. Linkr helps elevate your sales with the Amazon Buy Now button — a powerful tool to improve your Amazon organic rankings and drive more sales on both your Amazon listings and Shopify store.
-                  </Text>
-                  <Text as="p" variant="bodyMd">
-                    Start turning traffic into conversions with a seamless shopping experience your customers trust.
-                  </Text>
-                </BlockStack>
-                <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '8px' }}>
-                  <Button url="https://help.linkr.com/getting-started" external variant="primary">
-                    Getting Started Guide
-                  </Button>
-                </div>
-              </BlockStack>
-            </Card>
-            
-            {/* Header Section with Marketplace Selection */}
-            <Card>
-              <BlockStack gap="400">
-                <InlineStack gap="800" blockAlign="center">
-                  <Text as="h2" variant="headingMd" fontWeight="semibold">
-                    Amazon Region
-                  </Text>
-                  <div style={{ flex: 1 }}>
-                    <Select 
-                      label=""
-                      options={domainOptions}
-                      onChange={(value) => {
-                        setSelectedAmazonDomain(value);
-                        // Reset to first page when changing regions to make status change more apparent
-                        setCurrentPage(1);
+            {showWelcomeCard && (
+              <Card>
+                <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: '0', right: '0' }}>
+                    <Button
+                      variant="plain"
+                      size="slim"
+                      onClick={() => {
+                        setShowWelcomeCard(false);
+                        localStorage.setItem('linkr_hideWelcomeCard', 'true');
                       }}
-                      value={selectedAmazonDomain}
+                    >
+                      Don't show again
+                    </Button>
+                  </div>
+                  <BlockStack gap="400">
+                    <Text as="h2" variant="headingMd" fontWeight="semibold">
+                      🎉 Welcome to Linkr!
+                    </Text>
+                    <BlockStack gap="300">
+                      <Text as="p" variant="bodyMd">
+                        Linkr blocks have been automatically added to your Shopify theme. You can find these app blocks in your theme editor and place them anywhere you like. Linkr helps elevate your sales with the Amazon Buy Now button — a powerful tool to improve your Amazon organic rankings and drive more sales on both your Amazon listings and Shopify store.
+                      </Text>
+                      <Text as="p" variant="bodyMd">
+                        Start turning traffic into conversions with a seamless shopping experience your customers trust.
+                      </Text>
+                    </BlockStack>
+                    <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '8px' }}>
+                      <Button url="https://help.linkr.com/getting-started" external variant="primary">
+                        Getting Started Guide
+                      </Button>
+                    </div>
+                  </BlockStack>
+                </div>
+              </Card>
+            )}
+            
+            {/* Combined Product Management Section with Amazon Region Selection */}
+            <Card>
+              <BlockStack gap="500">
+                {/* First row: Amazon Region selection */}
+                <div>
+                  <InlineStack align="space-between" blockAlign="center" gap="200">
+                    <div style={{ flexShrink: 0, marginRight: '-10px' }}>
+                      <Text as="h2" variant="headingMd" fontWeight="semibold">
+                        Amazon Region
+                      </Text>
+                    </div>
+                    <div style={{ width: '100%', maxWidth: '800px' }}>
+                      <Select 
+                        label=""
+                        labelHidden
+                        options={domainOptions}
+                        onChange={(value) => {
+                          setSelectedAmazonDomain(value);
+                          // Reset to first page when changing regions to make status change more apparent
+                          setCurrentPage(1);
+                        }}
+                        value={selectedAmazonDomain}
+                      />
+                    </div>
+                  </InlineStack>
+                </div>
+                
+                {/* Second row: Tabs for filtering with Select products button */}
+                <InlineStack align="space-between" blockAlign="center">
+                  <div style={{ flexGrow: 1 }}>
+                    <Tabs 
+                      tabs={tabs} 
+                      selected={selectedTab} 
+                      onSelect={(selectedTabIndex) => {
+                        setSelectedTab(selectedTabIndex);
+                        setCurrentPage(1); // Reset to first page when changing tabs
+                      }} 
                     />
                   </div>
-                </InlineStack>
-                
-              </BlockStack>
-            </Card>
-
-            {/* Product Management Section */}
-            <Card>
-              <BlockStack gap="400">
-                <InlineStack align="space-between">
-                  <Tabs 
-                    tabs={tabs} 
-                    selected={selectedTab} 
-                    onSelect={(selectedTabIndex) => {
-                      setSelectedTab(selectedTabIndex);
-                      setCurrentPage(1); // Reset to first page when changing tabs
-                    }} 
-                  />
                   <Button variant="primary" onClick={() => setSelectProductsModalOpen(true)}>
                     Select products
                   </Button>
                 </InlineStack>
             
-            {/* Status Filter Tabs */}
-
             {/* Search Filter - Just above table */}
             <TextField
               label=""
@@ -701,7 +1256,21 @@ const AmazonBuyButtonDashboard = () => {
 
             {/* Products Table */}
             <Box paddingBlockStart="400">
-              <div style={{ overflowX: 'auto', overflowY: 'hidden' }}>
+              <div style={{ 
+                overflowX: 'auto', 
+                overflowY: 'hidden', 
+                width: '100%',
+                maxWidth: '100%',
+                padding: '0'
+              }}>
+                <div style={{ 
+                  width: '100%',
+                  display: 'table',
+                  tableLayout: 'fixed',
+                  borderCollapse: 'collapse',
+                  marginRight: '0',
+                  paddingRight: '0'
+                }}>
                 <IndexTable
                   resourceName={{ singular: 'product', plural: 'products' }}
                   itemCount={paginatedProducts.length}
@@ -712,7 +1281,7 @@ const AmazonBuyButtonDashboard = () => {
                     { title: 'ASIN' },
                     { title: 'Keywords' },
                     { title: 'Custom Link' },
-                    { title: `Status (${domainOptions.find(option => option.value === selectedAmazonDomain)?.label || selectedAmazonDomain})` },
+                    { title: 'Status' },
                     { title: 'Actions' },
                   ]}
                 >
@@ -724,36 +1293,76 @@ const AmazonBuyButtonDashboard = () => {
                     >
                       <IndexTable.Cell>
                         <Text as="span" variant="bodyMd" fontWeight="medium">
-                          <div style={{ maxWidth: '200px', minWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {product.title}
+                          <div style={{ 
+                            maxWidth: '250px', 
+                            width: '100%', 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis', 
+                            whiteSpace: 'nowrap'
+                          }} title={product.title}>
+                            {product.title.length > 45 ? `${product.title.substring(0, 45)}...` : product.title}
                           </div>
                         </Text>
                       </IndexTable.Cell>
                       <IndexTable.Cell>
                         <Text as="span" variant="bodyMd" tone="subdued">
-                          {product.clicks}
-                        </Text>
-                      </IndexTable.Cell>
-                      <IndexTable.Cell>
-                        <Text as="span" variant="bodyMd" tone={product.asin === '-' ? 'subdued' : undefined}>
-                          <div style={{ minWidth: '80px' }}>
-                            {product.asin}
+                          <div style={{ width: '50px', textAlign: 'center' }}>
+                            {product.clicks}
                           </div>
                         </Text>
                       </IndexTable.Cell>
                       <IndexTable.Cell>
-                        <Text as="span" variant="bodyMd" tone={product.keywords === '-' ? 'subdued' : undefined}>
-                          <div style={{ maxWidth: '120px', minWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {product.keywords}
-                          </div>
-                        </Text>
+                        {(() => {
+                          // Get region-specific data for the selected domain
+                          const regionData = getRegionSpecificData(product, selectedAmazonDomain);
+                          return (
+                            <Text as="span" variant="bodyMd" tone={regionData.asin === '-' ? 'subdued' : undefined}>
+                              <div style={{ 
+                                width: '80px'
+                              }} title={regionData.asin}>
+                                {regionData.asin}
+                              </div>
+                            </Text>
+                          );
+                        })()}
                       </IndexTable.Cell>
                       <IndexTable.Cell>
-                        <Text as="span" variant="bodyMd" tone={product.customLink === '-' ? 'subdued' : undefined}>
-                          <div style={{ maxWidth: '120px', minWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {product.customLink}
-                          </div>
-                        </Text>
+                        {(() => {
+                          // Get region-specific data for the selected domain
+                          const regionData = getRegionSpecificData(product, selectedAmazonDomain);
+                          return (
+                            <Text as="span" variant="bodyMd" tone={regionData.keywords === '-' ? 'subdued' : undefined}>
+                              <div style={{ 
+                                width: '100px', 
+                                overflow: 'hidden', 
+                                textOverflow: 'ellipsis', 
+                                whiteSpace: 'nowrap'
+                              }} title={regionData.keywords}>
+                                {regionData.keywords === '-' ? '-' : 
+                                 regionData.keywords.length > 15 ? `${regionData.keywords.substring(0, 15)}...` : regionData.keywords}
+                              </div>
+                            </Text>
+                          );
+                        })()}
+                      </IndexTable.Cell>
+                      <IndexTable.Cell>
+                        {(() => {
+                          // Get region-specific data for the selected domain
+                          const regionData = getRegionSpecificData(product, selectedAmazonDomain);
+                          return (
+                            <Text as="span" variant="bodyMd" tone={regionData.customLink === '-' ? 'subdued' : undefined}>
+                              <div style={{ 
+                                width: '120px', 
+                                overflow: 'hidden', 
+                                textOverflow: 'ellipsis', 
+                                whiteSpace: 'nowrap'
+                              }} title={regionData.customLink}>
+                                {regionData.customLink === '-' ? '-' : 
+                                 regionData.customLink.length > 20 ? `${regionData.customLink.substring(0, 20)}...` : regionData.customLink}
+                              </div>
+                            </Text>
+                          );
+                        })()}
                       </IndexTable.Cell>
                       <IndexTable.Cell>
                         <div 
@@ -791,7 +1400,21 @@ const AmazonBuyButtonDashboard = () => {
                         </div>
                       </IndexTable.Cell>
                       <IndexTable.Cell>
-                        <div style={{ minWidth: '60px' }}>
+                        <div style={{ 
+                          width: '100%', 
+                          display: 'flex', 
+                          gap: '8px', 
+                          justifyContent: 'flex-start',
+                          paddingRight: '0'
+                        }}>
+                          <Button 
+                            variant="plain" 
+                            accessibilityLabel="View product details"
+                            onClick={() => handleViewProduct(product)}
+                            size="slim"
+                          >
+                            View
+                          </Button>
                           <Button 
                             variant="plain" 
                             accessibilityLabel="Edit product"
@@ -805,7 +1428,31 @@ const AmazonBuyButtonDashboard = () => {
                     </IndexTable.Row>
                   ))}
                 </IndexTable>
+                </div>
               </div>
+              
+              {/* Add custom styles to hide scrollbar and fix table width */}
+              <style dangerouslySetInnerHTML={{
+                __html: `
+                  .Polaris-IndexTable {
+                    width: 100%;
+                    margin-right: 0;
+                    padding-right: 0;
+                  }
+                  .Polaris-IndexTable-ScrollContainer {
+                    overflow-x: hidden;
+                    width: 100%;
+                    padding-right: 0;
+                  }
+                  .Polaris-IndexTable-TableRow {
+                    width: 100%;
+                    padding-right: 0;
+                  }
+                  .Polaris-IndexTable-TableCell:last-child {
+                    padding-right: 0;
+                  }
+                `
+              }} />
               
               {/* Pagination */}
               {totalPages > 1 && (
@@ -827,7 +1474,17 @@ const AmazonBuyButtonDashboard = () => {
           </BlockStack>
           
           {/* Explicit bottom gap - increased */}
-          <Box paddingBlockStart="800" />
+          <Box paddingBlockStart="800">
+            <div style={{ textAlign: 'center' }}>
+              <Button
+                variant="plain"
+                size="slim"
+                onClick={resetWelcomeCard}
+              >
+                Show welcome message
+              </Button>
+            </div>
+          </Box>
         </Layout.Section>
       </Layout>
 
@@ -837,22 +1494,18 @@ const AmazonBuyButtonDashboard = () => {
           onClose={() => setEditModalOpen(false)}
           title={`Edit product for ${domainOptions.find(option => option.value === selectedAmazonDomain)?.label || selectedAmazonDomain}`}
           primaryAction={{
-            content: `Enable for ${selectedAmazonDomain}`,
-            onAction: () => handleSaveProduct(true),
+            content: 'Save',
+            onAction: () => handleSaveProduct(false),
           }}
           secondaryActions={[
             {
-              content: 'Save',
-              onAction: () => handleSaveProduct(false),
-            },
+              content: 'Cancel',
+              onAction: () => setEditModalOpen(false),
+            }
           ]}
         >
           <Modal.Section>
             <BlockStack gap="400">
-              <Text as="p" variant="bodyMd" tone="subdued">
-                You are editing settings for the {domainOptions.find(option => option.value === selectedAmazonDomain)?.label || selectedAmazonDomain} marketplace.
-                Product status is region-specific.
-              </Text>
               <FormLayout>
                 <TextField
                   label="ASIN"
@@ -877,320 +1530,395 @@ const AmazonBuyButtonDashboard = () => {
               <Checkbox
                 label="Improve search ranking"
                 checked={editForm.improveSearchRanking}
-                onChange={(checked) => setEditForm({ ...editForm, improveSearchRanking: checked })}
-              />                  <TextField
+                onChange={(checked) => setEditForm({ 
+                  ...editForm, 
+                  improveSearchRanking: checked,
+                  // Don't clear keywords when turning off search ranking improvement
+                })}
+              />
+              
+              <TextField
                 label="Keywords"
                 value={editForm.keywords}
                 onChange={(value) => setEditForm({ ...editForm, keywords: value })}
                 autoComplete="off"
+                disabled={!editForm.improveSearchRanking}
               />
             </FormLayout>
             </BlockStack>
           </Modal.Section>
         </Modal>
 
+        {/* View Product Details Modal */}
+        {viewModalOpen && viewingProduct && (
+          <Modal
+            open={viewModalOpen}
+            onClose={handleCloseViewModal}
+            title="List of Regions"
+            primaryAction={{
+              content: 'Save',
+              onAction: handleSaveViewChanges,
+              disabled: !hasUnsavedChanges
+            }}
+            secondaryActions={[
+              {
+                content: 'Cancel',
+                onAction: handleCloseViewModal
+              }
+            ]}
+            size="large"
+          >
+            <Modal.Section>
+              <BlockStack gap="400">
+                <Text variant="headingMd" as="h2">Product Title: {viewingProduct.title}</Text>
+                
+                {/* All Regions Table */}
+                <IndexTable
+                  resourceName={{ singular: 'region', plural: 'regions' }}
+                  itemCount={domainOptions.length}
+                  selectable={false}
+                  headings={[
+                    { title: 'Region' },
+                    { title: 'ASIN' },
+                    { title: 'Keywords' },
+                    { title: 'Custom Link' },
+                    { title: 'Status' }
+                  ]}
+                >
+                  {domainOptions.map((domain, index) => {
+                    // Get region-specific data using our helper function
+                    const regionData = getRegionSpecificData(viewingProduct, domain.value);
+
+                    return (
+                      <IndexTable.Row
+                        id={`region-${index}`}
+                        key={`region-${index}`}
+                        position={index}
+                      >
+                        <IndexTable.Cell>
+                          <Text as="span" variant="bodyMd" fontWeight="medium">
+                            {domain.label}
+                          </Text>
+                        </IndexTable.Cell>
+                        <IndexTable.Cell>
+                          <InlineEditableCell
+                            value={editingFields[domain.value]?.asin || ''}
+                            onChange={(value) => handleInlineFieldUpdate(domain.value, 'asin', value)}
+                            placeholder="Enter ASIN"
+                            minWidth="120px"
+                            isActive={activeEditingCell === `${domain.value}-asin`}
+                            onFocus={() => handleCellFocus(domain.value, 'asin')}
+                            onBlur={handleCellBlur}
+                          />
+                        </IndexTable.Cell>
+                        <IndexTable.Cell>
+                          <InlineEditableCell
+                            value={editingFields[domain.value]?.keywords || ''}
+                            onChange={(value) => handleInlineFieldUpdate(domain.value, 'keywords', value)}
+                            placeholder="Enter keywords"
+                            minWidth="150px"
+                            isActive={activeEditingCell === `${domain.value}-keywords`}
+                            onFocus={() => handleCellFocus(domain.value, 'keywords')}
+                            onBlur={handleCellBlur}
+                          />
+                        </IndexTable.Cell>
+                        <IndexTable.Cell>
+                          <InlineEditableCell
+                            value={editingFields[domain.value]?.customLink || ''}
+                            onChange={(value) => handleInlineFieldUpdate(domain.value, 'customLink', value)}
+                            placeholder="Enter custom link"
+                            minWidth="200px"
+                            isActive={activeEditingCell === `${domain.value}-customLink`}
+                            onFocus={() => handleCellFocus(domain.value, 'customLink')}
+                            onBlur={handleCellBlur}
+                          />
+                        </IndexTable.Cell>
+                        <IndexTable.Cell>
+                          <div 
+                            onClick={() => handleRegionStatusToggle(viewingProduct.id, domain.value as AmazonDomain)}
+                            role="switch" 
+                            aria-checked={regionData.status === 'active'} 
+                            tabIndex={0} 
+                            style={{
+                              width: '40px', 
+                              height: '20px', 
+                              borderRadius: '10px', 
+                              backgroundColor: regionData.status === 'active' ? 'rgb(0, 128, 96)' : '#E4E5E7', 
+                              position: 'relative', 
+                              transition: 'background-color 0.2s ease', 
+                              cursor: 'pointer'
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleRegionStatusToggle(viewingProduct.id, domain.value as AmazonDomain);
+                              }
+                            }}
+                          >
+                            <div style={{
+                              width: '16px', 
+                              height: '16px', 
+                              borderRadius: '50%', 
+                              backgroundColor: 'rgb(255, 255, 255)', 
+                              position: 'absolute', 
+                              top: '2px', 
+                              left: regionData.status === 'active' ? '22px' : '2px', 
+                              transition: 'left 0.2s ease', 
+                              boxShadow: 'rgba(0, 0, 0, 0.1) 0px 1px 3px'
+                            }} />
+                          </div>
+                        </IndexTable.Cell>
+                      </IndexTable.Row>
+                    );
+                  })}
+                </IndexTable>
+              </BlockStack>
+            </Modal.Section>
+          </Modal>
+        )}
+
         {/* Select Products Modal */}
         <Modal
           open={selectProductsModalOpen}
-          onClose={() => setSelectProductsModalOpen(false)}
-          title="Select Products to Add"
+          onClose={toggleProductModal}
+          title="Edit products"
           primaryAction={{
-            content: "Add",
+            content: "Done",
             onAction: () => {
-              // Add selected products to the main products list with all regions set to inactive by default
-              const newProducts = availableProducts
-                .filter(product => selectedProductsForAdd.includes(product.id))
-                .map(product => ({
-                  id: `new_${Date.now()}_${product.id}`,
-                  title: product.name,
-                  image: product.image,
-                  clicks: Math.floor(Math.random() * 100),
-                  asin: '-',
-                  keywords: '-',
-                  customLink: '-',
-                  regionStatus: createDefaultRegionStatus()
-                }));
-              
-              setProducts(prev => [...newProducts, ...prev]);
-              setSelectedProductsForAdd([]);
-              setSelectProductsModalOpen(false);
-              setProductSearchValue('');
-              clearAllFilters();
+              if (selectedProductsForAdd.length > 0) {
+                // Add selected products to the main products list
+                const newProducts = availableProducts
+                  .filter(product => selectedProductsForAdd.includes(product.id))
+                  .map(product => ({
+                    id: `new_${Date.now()}_${product.id}`,
+                    title: product.name,
+                    image: product.image,
+                    clicks: Math.floor(Math.random() * 100),
+                    asin: '-',
+                    keywords: '-',
+                    customLink: '-',
+                    regionStatus: createDefaultRegionStatus()
+                  }));
+                
+                setProducts(prev => [...newProducts, ...prev]);
+              }
+              toggleProductModal();
             },
-            disabled: selectedProductsForAdd.length === 0,
           }}
           secondaryActions={[
             {
               content: 'Cancel',
-              onAction: () => {
-                setSelectProductsModalOpen(false);
-                setSelectedProductsForAdd([]);
-                setProductSearchValue('');
-                clearAllFilters();
-              },
+              onAction: toggleProductModal,
             },
           ]}
         >
           <Modal.Section>
+            {/* Search and Filter Section */}
             <BlockStack gap="400">
-              <Filters
-                  queryValue={productSearchValue}
-                  queryPlaceholder="Search products"
-                  onQueryChange={setProductSearchValue}
-                  onQueryClear={() => setProductSearchValue('')}
-                  filters={[
-                  {
-                    key: 'vendor',
-                    label: 'Vendor',
-                    filter: (
-                      <Select
-                        label=""
-                        options={getUniqueVendors()}
-                        value={selectedVendor}
-                        onChange={(value) => {
-                          setSelectedVendor(value);
-                          if (value) {
-                            // Remove existing vendor filter if any
-                            setActiveFilters(prev => prev.filter(f => f.key !== 'Vendor'));
-                            // Add new vendor filter
-                            const vendor = getUniqueVendors().find(v => v.value === value);
-                            if (vendor) {
-                              handleFilterAdd('Vendor', value, vendor.label);
-                            }
-                          } else {
-                            // Clear vendor filter when empty value is selected
-                            setActiveFilters(prev => prev.filter(f => f.key !== 'Vendor'));
-                          }
-                        }}
-                      />
-                    ),
-                    shortcut: true,
-                  },
-                  {
-                    key: 'productType',
-                    label: 'Product type',
-                    filter: (
-                      <Select
-                        label=""
-                        placeholder=""
-                        options={getUniqueProductTypes()}
-                        value={selectedProductType}
-                        onChange={(value) => {
-                          setSelectedProductType(value);
-                          if (value) {
-                            // Remove existing product type filter if any
-                            setActiveFilters(prev => prev.filter(f => f.key !== 'Product type'));
-                            // Add new product type filter
-                            const type = getUniqueProductTypes().find(t => t.value === value);
-                            if (type) {
-                              handleFilterAdd('Product type', value, type.label);
-                            }
-                          } else {
-                            // Clear product type filter when empty value is selected
-                            setActiveFilters(prev => prev.filter(f => f.key !== 'Product type'));
-                          }
-                        }}
-                      />
-                    ),
-                    shortcut: true,
-                  },
-                  {
-                    key: 'availability',
-                    label: 'Availability',
-                    filter: (
-                      <Select
-                        label=""
-                        placeholder=""
-                        options={getUniqueAvailabilityOptions()}
-                        value={selectedAvailability}
-                        onChange={(value) => {
-                          setSelectedAvailability(value);
-                          if (value) {
-                            // Remove existing availability filter if any
-                            setActiveFilters(prev => prev.filter(f => f.key !== 'Availability'));
-                            // Add new availability filter
-                            const availability = getUniqueAvailabilityOptions().find(a => a.value === value);
-                            if (availability) {
-                              handleFilterAdd('Availability', value, availability.label);
-                            }
-                          } else {
-                            // Clear availability filter when empty value is selected
-                            setActiveFilters(prev => prev.filter(f => f.key !== 'Availability'));
-                          }
-                        }}
-                      />
-                    ),
-                    shortcut: true,
-                  },
-                  {
-                    key: 'category',
-                    label: 'Category',
-                    filter: (
-                      <Select
-                        label=""
-                        placeholder=""
-                        options={getUniqueCategories()}
-                        value={selectedCategory}
-                        onChange={(value) => {
-                          setSelectedCategory(value);
-                          if (value) {
-                            // Remove existing category filter if any
-                            setActiveFilters(prev => prev.filter(f => f.key !== 'Category'));
-                            // Add new category filter
-                            const category = getUniqueCategories().find(c => c.value === value);
-                            if (category) {
-                              handleFilterAdd('Category', value, category.label);
-                            }
-                          } else {
-                            // Clear category filter when empty value is selected
-                            setActiveFilters(prev => prev.filter(f => f.key !== 'Category'));
-                          }
-                        }}
-                      />
-                    ),
-                    shortcut: true,
-                  },
-                  {
-                    key: 'collection',
-                    label: 'Collection',
-                    filter: (
-                      <Select
-                        label=""
-                        placeholder=""
-                        options={getUniqueCollections()}
-                        value={selectedCollection}
-                        onChange={(value) => {
-                          setSelectedCollection(value);
-                          if (value) {
-                            // Remove existing collection filter if any
-                            setActiveFilters(prev => prev.filter(f => f.key !== 'Collection'));
-                            // Add new collection filter
-                            const collection = getUniqueCollections().find(c => c.value === value);
-                            if (collection) {
-                              handleFilterAdd('Collection', value, collection.label);
-                            }
-                          } else {
-                            // Clear collection filter when empty value is selected
-                            setActiveFilters(prev => prev.filter(f => f.key !== 'Collection'));
-                          }
-                        }}
-                      />
-                    ),
-                    shortcut: true,
-                  },
-                  {
-                    key: 'sku',
-                    label: 'SKU',
-                    filter: (
-                      <Select
-                        label=""
-                        placeholder=""
-                        options={getUniqueSKUs()}
-                        value={selectedSku}
-                        onChange={(value) => {
-                          setSelectedSku(value);
-                          if (value) {
-                            // Remove existing SKU filter if any
-                            setActiveFilters(prev => prev.filter(f => f.key !== 'SKU'));
-                            // Add new SKU filter
-                            const sku = getUniqueSKUs().find(s => s.value === value);
-                            if (sku) {
-                              handleFilterAdd('SKU', value, sku.label);
-                            }
-                          } else {
-                            // Clear SKU filter when empty value is selected
-                            setActiveFilters(prev => prev.filter(f => f.key !== 'SKU'));
-                          }
-                        }}
-                      />
-                    ),
-                    shortcut: true,
-                  },
-                  {
-                    key: 'price',
-                    label: 'Price',
-                    filter: (
-                      <InlineStack gap="200">
-                        <TextField
-                          label="Min price"
-                          type="number"
-                          value={priceRange.min}
-                          onChange={(value) => setPriceRange(prev => ({ ...prev, min: value }))}
-                          prefix="$"
-                          autoComplete="off"
-                        />
-                        <TextField
-                          label="Max price"
-                          type="number"
-                          value={priceRange.max}
-                          onChange={(value) => setPriceRange(prev => ({ ...prev, max: value }))}
-                          prefix="$"
-                          autoComplete="off"
-                        />
-                      </InlineStack>
-                    ),
-                    shortcut: false,
-                  },
-                ]}
-                appliedFilters={activeFilters}
-                onClearAll={clearAllFilters}
-              />
-              
-              <div 
-                style={{ 
-                  maxHeight: '400px', 
-                  overflowY: 'auto'
-                }}
-              >
-                <ResourceList
-                  resourceName={{ singular: 'product', plural: 'products' }}
-                  items={getFilteredProducts()}
-                  renderItem={(product) => {
-                    const isSelected = selectedProductsForAdd.includes(product.id);
-                    return (
-                      <ResourceList.Item
-                        id={product.id}
-                        onClick={() => {
-                          if (isSelected) {
-                            setSelectedProductsForAdd(prev => 
-                              prev.filter(id => id !== product.id)
-                            );
-                          } else {
-                            setSelectedProductsForAdd(prev => [...prev, product.id]);
-                          }
-                        }}
-                      >
-                        <InlineStack align="space-between">
-                          <BlockStack gap="100">
-                            <Text as="h3" variant="headingSm" fontWeight="semibold">
-                              {product.name}
-                            </Text>
-                            <Text as="p" variant="bodyMd" tone="subdued">
-                              ${product.price.toFixed(2)} • {product.vendor} • {product.availability}
-                            </Text>
-                          </BlockStack>
-                          <Checkbox 
-                            label=""
-                            checked={isSelected}
-                            onChange={() => {}}
-                          />
-                        </InlineStack>
-                      </ResourceList.Item>
-                    );
-                  }}
+              {/* Search Row */}
+              <InlineStack gap="400" blockAlign="center">
+              <div style={{ flex: 1 }}>
+                <TextField
+                  label=""
+                  labelHidden
+                  placeholder="Search products"
+                  value={productSearchValue}
+                  onChange={setProductSearchValue}
+                  prefix={<Icon source={SearchIcon} />}
+                  autoComplete="off"
                 />
               </div>
-              {/* Product count information at bottom */}
-              <Box paddingBlockStart="400">
-                <InlineStack align="start">
-                  <Text variant="bodySm" as="span" tone="subdued">
-                    {products.length} total products added. New products will be added with inactive status for all regions.
-                  </Text>
-                </InlineStack>
-              </Box>
-              </BlockStack>
+              <div style={{ width: '160px', flexShrink: 0 }}>
+                <Select
+                  label=""
+                  labelHidden
+                  options={[
+                    { label: 'All', value: 'all' },
+                    { label: 'Product title', value: 'product_title' },
+                    { label: 'SKU', value: 'sku' },
+                  ]}
+                  value={searchBy}
+                  onChange={setSearchBy}
+                />
+              </div>
+            </InlineStack>
+
+              {/* Add Filter Button - Shopify Style */}
+              <div className="Polaris-Filters__FiltersWrapper" aria-live="polite">
+                <div className="Polaris-Filters__FiltersInner">
+                  <div className="Polaris-Filters__FiltersStickyArea">
+                    <div className="">
+                      <div>
+                        <div>
+                          <Popover
+                            active={filterPopoverActive}
+                            activator={
+                              <button 
+                                className="Polaris-Filters__AddFilter" 
+                                aria-label="Add filter" 
+                                type="button" 
+                                tabIndex={0} 
+                                aria-controls=":r19h:" 
+                                aria-owns=":r19h:" 
+                                aria-expanded={filterPopoverActive} 
+                                data-state={filterPopoverActive ? "open" : "closed"}
+                                onClick={() => setFilterPopoverActive(!filterPopoverActive)}
+                              >
+                                <span className="Polaris-Text--root Polaris-Text--bodySm Polaris-Text--base">Add filter </span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                  <path d="M10.75 5.75c0-.414-.336-.75-.75-.75s-.75.336-.75.75v3.5h-3.5c-.414 0-.75.336-.75.75s.336.75.75.75h3.5v3.5c0 .414.336.75.75.75s.75-.336.75-.75v-3.5h3.5c.414 0 .75-.336.75-.75s-.336-.75-.75-.75h-3.5v-3.5Z"></path>
+                                </svg>
+                              </button>
+                            }
+                            onClose={() => setFilterPopoverActive(false)}
+                          >
+                            <ActionList
+                              actionRole="menuitem"
+                              items={[
+                                {
+                                  content: 'Vendor',
+                                  onAction: () => {
+                                    setFilterPopoverActive(false);
+                                    // You can implement a secondary popover for vendor selection
+                                  },
+                                },
+                                {
+                                  content: 'Product type',
+                                  onAction: () => {
+                                    setFilterPopoverActive(false);
+                                  },
+                                },
+                                {
+                                  content: 'Availability',
+                                  onAction: () => {
+                                    setFilterPopoverActive(false);
+                                  },
+                                },
+                                {
+                                  content: 'Category',
+                                  onAction: () => {
+                                    setFilterPopoverActive(false);
+                                  },
+                                },
+                                {
+                                  content: 'Collection',
+                                  onAction: () => {
+                                    setFilterPopoverActive(false);
+                                  },
+                                },
+                                {
+                                  content: 'SKU',
+                                  onAction: () => {
+                                    setFilterPopoverActive(false);
+                                  },
+                                },
+                              ]}
+                            />
+                          </Popover>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Active Filters */}
+              <InlineStack gap="400" blockAlign="center">
+                {activeFilters.map((filter) => (
+                  <Button key={filter.value} onClick={() => handleFilterRemove(filter)}>
+                    {filter.label}
+                  </Button>
+                ))}
+                
+                {/* Clear all filters if any active */}
+                {activeFilters.length > 0 && (
+                  <Button
+                    size="slim"
+                    variant="plain"
+                    onClick={clearAllFilters}
+                  >
+                    Clear all
+                  </Button>
+                )}
+              </InlineStack>
+            </BlockStack>
+
+            {/* Product List */}
+            <Box paddingBlockStart="400">
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {getFilteredProducts().map((product) => {
+                  const isSelected = selectedProductsForAdd.includes(product.id);
+                  return (
+                    <div
+                      key={product.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '12px 0',
+                        borderBottom: '1px solid #e1e3e5',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedProductsForAdd(prev => 
+                            prev.filter(id => id !== product.id)
+                          );
+                        } else {
+                          setSelectedProductsForAdd(prev => [...prev, product.id]);
+                        }
+                      }}
+                    >
+                      {/* Checkbox */}
+                      <div style={{ marginRight: '12px' }}>
+                        <Checkbox
+                          label=""
+                          labelHidden
+                          checked={isSelected}
+                          onChange={() => {}} // Handled by parent onClick
+                        />
+                      </div>
+                      
+                      {/* Product Image */}
+                      <div style={{ marginRight: '12px' }}>
+                        <Thumbnail
+                          source={product.image}
+                          alt={product.name}
+                          size="small"
+                        />
+                      </div>
+                      
+                      {/* Product Details */}
+                      <div style={{ flex: 1 }}>
+                        <Text as="span" variant="bodyMd" fontWeight="medium">
+                          {product.name}
+                        </Text>
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                {/* Empty State */}
+                {getFilteredProducts().length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                    <Text as="p" variant="bodyMd" tone="subdued">
+                      No products found
+                    </Text>
+                  </div>
+                )}
+              </div>
+            </Box>
           </Modal.Section>
         </Modal>
+
+        {/* Toast for notifications */}
+        {toastActive && (
+          <Toast
+            content={toastMessage}
+            onDismiss={handleToastDismiss}
+            duration={3000}
+            error={toastError}
+          />
+        )}
     </Page>
   );
 };
