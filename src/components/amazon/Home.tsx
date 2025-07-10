@@ -87,6 +87,7 @@ interface ProductWithRegionStatus {
   keywords: string;
   customLink: string;
   regionStatus: RegionStatus;
+  sku?: string;
 }
 
 // Legacy product with single status field
@@ -134,14 +135,18 @@ const AmazonBuyButtonDashboard = () => {
   const [productSearchValue, setProductSearchValue] = useState('');
   const [searchBy, setSearchBy] = useState('all');
   const [activeFilters, setActiveFilters] = useState<any[]>([]);
-  const [selectedVendor, setSelectedVendor] = useState('');
-  const [selectedProductType, setSelectedProductType] = useState('');
-  const [selectedAvailability, setSelectedAvailability] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedCollection, setSelectedCollection] = useState('');
-  const [selectedSku, setSelectedSku] = useState('');
-  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+  const [selectedFilterValues, setSelectedFilterValues] = useState<Record<string, string[]>>({
+    Vendor: [],
+    'Product type': [],
+    Availability: [],
+    Category: [],
+    Collection: [],
+    SKU: []
+  });
+  const [currentFilterCategory, setCurrentFilterCategory] = useState<string | null>(null);
   const [filterPopoverActive, setFilterPopoverActive] = useState(false);
+  const [valuePopoverActive, setValuePopoverActive] = useState(false);
+  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   
   // Toast state and handlers
   const [toastActive, setToastActive] = useState(false);
@@ -950,39 +955,57 @@ const AmazonBuyButtonDashboard = () => {
     return skus.map(sku => ({ label: sku, value: sku }));
   };
 
-  const handleFilterAdd = (filterType: string, value: string, label: string) => {
-    const newFilter = { key: filterType, value, label: `${filterType}: ${label}` };
-    setActiveFilters(prev => [...prev, newFilter]);
+  const handleFilterCategorySelect = (filterType: string) => {
+    setCurrentFilterCategory(filterType);
+    setFilterPopoverActive(false);
+    setValuePopoverActive(true);
+  };
+
+  const handleFilterValueSelect = (value: string, label: string) => {
+    if (!currentFilterCategory) return;
     
-    // Apply the filter
-    if (filterType === 'Vendor') setSelectedVendor(value);
-    if (filterType === 'Product type') setSelectedProductType(value);
-    if (filterType === 'Availability') setSelectedAvailability(value);
-    if (filterType === 'Category') setSelectedCategory(value);
-    if (filterType === 'Collection') setSelectedCollection(value);
-    if (filterType === 'SKU') setSelectedSku(value);
+    // Check if value is already selected for this category
+    const currentValues = selectedFilterValues[currentFilterCategory] || [];
+    if (currentValues.includes(value)) return;
+    
+    // Add value to selected values for this category
+    setSelectedFilterValues(prev => ({
+      ...prev,
+      [currentFilterCategory]: [...(prev[currentFilterCategory] || []), value]
+    }));
+    
+    // Add to active filters
+    const newFilter = { 
+      key: currentFilterCategory, 
+      value, 
+      label: `${currentFilterCategory}: ${label}` 
+    };
+    setActiveFilters(prev => [...prev, newFilter]);
   };
 
   const handleFilterRemove = (filterToRemove: any) => {
-    setActiveFilters(prev => prev.filter(filter => filter !== filterToRemove));
+    // Remove from active filters
+    setActiveFilters(prev => prev.filter(filter => 
+      !(filter.key === filterToRemove.key && filter.value === filterToRemove.value)
+    ));
     
-    // Remove the filter
-    if (filterToRemove.key === 'Vendor') setSelectedVendor('');
-    if (filterToRemove.key === 'Product type') setSelectedProductType('');
-    if (filterToRemove.key === 'Availability') setSelectedAvailability('');
-    if (filterToRemove.key === 'Category') setSelectedCategory('');
-    if (filterToRemove.key === 'Collection') setSelectedCollection('');
-    if (filterToRemove.key === 'SKU') setSelectedSku('');
+    // Remove from selected values
+    setSelectedFilterValues(prev => ({
+      ...prev,
+      [filterToRemove.key]: prev[filterToRemove.key].filter(val => val !== filterToRemove.value)
+    }));
   };
 
   const clearAllFilters = () => {
     setActiveFilters([]);
-    setSelectedVendor('');
-    setSelectedProductType('');
-    setSelectedAvailability('');
-    setSelectedCategory('');
-    setSelectedCollection('');
-    setSelectedSku('');
+    setSelectedFilterValues({
+      Vendor: [],
+      'Product type': [],
+      Availability: [],
+      Category: [],
+      Collection: [],
+      SKU: []
+    });
     setPriceRange({ min: '', max: '' });
   };
 
@@ -998,23 +1021,24 @@ const AmazonBuyButtonDashboard = () => {
         ? product.id.toLowerCase().includes(searchTerm)
         : product.name.toLowerCase().includes(searchTerm);
 
-      // Vendor filter
-      const matchesVendor = !selectedVendor || product.vendor === selectedVendor;
+      // Check all filter categories
+      const vendorValues = selectedFilterValues['Vendor'];
+      const matchesVendor = vendorValues.length === 0 || vendorValues.includes(product.vendor);
       
-      // Product type filter
-      const matchesProductType = !selectedProductType || product.productType === selectedProductType;
+      const productTypeValues = selectedFilterValues['Product type'];
+      const matchesProductType = productTypeValues.length === 0 || productTypeValues.includes(product.productType);
       
-      // Availability filter
-      const matchesAvailability = !selectedAvailability || product.availability === selectedAvailability;
+      const availabilityValues = selectedFilterValues['Availability'];
+      const matchesAvailability = availabilityValues.length === 0 || availabilityValues.includes(product.availability);
       
-      // Category filter
-      const matchesCategory = !selectedCategory || product.category === selectedCategory;
+      const categoryValues = selectedFilterValues['Category'];
+      const matchesCategory = categoryValues.length === 0 || categoryValues.includes(product.category);
       
-      // Collection filter
-      const matchesCollection = !selectedCollection || product.collection === selectedCollection;
+      const collectionValues = selectedFilterValues['Collection'];
+      const matchesCollection = collectionValues.length === 0 || collectionValues.includes(product.collection);
       
-      // SKU filter
-      const matchesSku = !selectedSku || product.sku === selectedSku;
+      const skuValues = selectedFilterValues['SKU'];
+      const matchesSku = skuValues.length === 0 || skuValues.includes(product.sku);
       
       // Price range filter
       const matchesPrice = (!priceRange.min || product.price >= parseFloat(priceRange.min)) &&
@@ -1683,7 +1707,7 @@ const AmazonBuyButtonDashboard = () => {
           onClose={toggleProductModal}
           title="Edit products"
           primaryAction={{
-            content: "Done",
+            content: "Add",
             onAction: () => {
               if (selectedProductsForAdd.length > 0) {
                 // Add selected products to the main products list
@@ -1700,7 +1724,11 @@ const AmazonBuyButtonDashboard = () => {
                     regionStatus: createDefaultRegionStatus()
                   }));
                 
+                // Add new products to the beginning of the list
                 setProducts(prev => [...newProducts, ...prev]);
+                
+                // Show success toast
+                showToast(`${newProducts.length} product${newProducts.length > 1 ? 's' : ''} added successfully`);
               }
               toggleProductModal();
             },
@@ -1743,11 +1771,58 @@ const AmazonBuyButtonDashboard = () => {
               </div>
             </InlineStack>
 
-              {/* Add Filter Button - Shopify Style */}
-              <div className="Polaris-Filters__FiltersWrapper" aria-live="polite">
+              {/* Polaris-style Filter UI */}
+              <div className="Polaris-Filters__FiltersWrapper Polaris-Filters__FiltersWrapperWithAddButton" aria-live="polite">
                 <div className="Polaris-Filters__FiltersInner">
                   <div className="Polaris-Filters__FiltersStickyArea">
-                    <div className="">
+                    {/* Active Filter Pills */}
+                    {activeFilters.map((filter) => (
+                      <div key={`${filter.key}-${filter.value}`}>
+                        <div>
+                          <div className="Polaris-Filters-FilterPill__FilterButton Polaris-Filters-FilterPill__ActiveFilterButton">
+                            <div className="Polaris-InlineStack" style={{ display: 'flex', flexWrap: 'nowrap', flexDirection: 'row', gap: '0' }}>
+                              <button className="Polaris-Filters-FilterPill__PlainButton Polaris-Filters-FilterPill__ToggleButton" aria-label={filter.label} type="button">
+                                <div className="Polaris-InlineStack" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'nowrap', flexDirection: 'row', gap: '0' }}>
+                                  <div className="Polaris-Box" style={{ paddingLeft: '4px' }}>
+                                    <div className="Polaris-InlineStack" style={{ display: 'flex', flexWrap: 'wrap', flexDirection: 'row' }}>
+                                      <span className="Polaris-Text--root Polaris-Text--bodySm">{filter.label}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </button>
+                              <button className="Polaris-Filters-FilterPill__PlainButton Polaris-Filters-FilterPill--clearButton" 
+                                aria-label={`Clear ${filter.label}`} 
+                                type="button"
+                                onClick={() => handleFilterRemove(filter)}
+                              >
+                                <div className="Polaris-Filters-FilterPill__IconWrapper">
+                                  <span className="Polaris-Icon">
+                                    <Icon source={XIcon} />
+                                  </span>
+                                </div>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {/* Clear All Button - Only show if there are active filters */}
+                    {activeFilters.length > 0 && (
+                      <div className="Polaris-Filters__ClearButton">
+                        <Button
+                          size="slim"
+                          onClick={clearAllFilters}
+                          variant="plain"
+                          accessibilityLabel="Clear all filters"
+                        >
+                          Clear all
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {/* Add Filter Button */}
+                    <div className="Polaris-Filters__AddFilterActivatorMultiple">
                       <div>
                         <div>
                           <Popover
@@ -1757,11 +1832,6 @@ const AmazonBuyButtonDashboard = () => {
                                 className="Polaris-Filters__AddFilter" 
                                 aria-label="Add filter" 
                                 type="button" 
-                                tabIndex={0} 
-                                aria-controls=":r19h:" 
-                                aria-owns=":r19h:" 
-                                aria-expanded={filterPopoverActive} 
-                                data-state={filterPopoverActive ? "open" : "closed"}
                                 onClick={() => setFilterPopoverActive(!filterPopoverActive)}
                               >
                                 <span className="Polaris-Text--root Polaris-Text--bodySm Polaris-Text--base">Add filter </span>
@@ -1776,41 +1846,28 @@ const AmazonBuyButtonDashboard = () => {
                               actionRole="menuitem"
                               items={[
                                 {
+                                  content: 'Category',
+                                  onAction: () => handleFilterCategorySelect('Category'),
+                                },
+                                {
                                   content: 'Vendor',
-                                  onAction: () => {
-                                    setFilterPopoverActive(false);
-                                    // You can implement a secondary popover for vendor selection
-                                  },
+                                  onAction: () => handleFilterCategorySelect('Vendor'),
                                 },
                                 {
                                   content: 'Product type',
-                                  onAction: () => {
-                                    setFilterPopoverActive(false);
-                                  },
+                                  onAction: () => handleFilterCategorySelect('Product type'),
                                 },
                                 {
                                   content: 'Availability',
-                                  onAction: () => {
-                                    setFilterPopoverActive(false);
-                                  },
-                                },
-                                {
-                                  content: 'Category',
-                                  onAction: () => {
-                                    setFilterPopoverActive(false);
-                                  },
+                                  onAction: () => handleFilterCategorySelect('Availability'),
                                 },
                                 {
                                   content: 'Collection',
-                                  onAction: () => {
-                                    setFilterPopoverActive(false);
-                                  },
+                                  onAction: () => handleFilterCategorySelect('Collection'),
                                 },
                                 {
                                   content: 'SKU',
-                                  onAction: () => {
-                                    setFilterPopoverActive(false);
-                                  },
+                                  onAction: () => handleFilterCategorySelect('SKU'),
                                 },
                               ]}
                             />
@@ -1818,29 +1875,144 @@ const AmazonBuyButtonDashboard = () => {
                         </div>
                       </div>
                     </div>
+                    
+                    {/* Value Selection Popover */}
+                    <Popover
+                      active={valuePopoverActive}
+                      activator={<div></div>} /* Hidden activator */
+                      onClose={() => setValuePopoverActive(false)}
+                    >
+                      <div style={{ minWidth: '200px', padding: '12px' }}>
+                        <BlockStack gap="400">
+                          <Text variant="headingMd" as="h3">
+                            {currentFilterCategory}
+                          </Text>
+                          
+                          {currentFilterCategory === 'Category' && (
+                            <div>
+                              <Text variant="bodyMd" as="p">Select categories</Text>
+                              <ActionList
+                                actionRole="menuitem"
+                                items={getUniqueCategories().map(option => ({
+                                  content: option.label,
+                                  onAction: () => {
+                                    handleFilterValueSelect(option.value, option.label);
+                                    setValuePopoverActive(false);
+                                  },
+                                  active: selectedFilterValues['Category']?.includes(option.value)
+                                }))}
+                              />
+                            </div>
+                          )}
+                          
+                          {currentFilterCategory === 'Vendor' && (
+                            <div>
+                              <Text variant="bodyMd" as="p">Select vendors</Text>
+                              <ActionList
+                                actionRole="menuitem"
+                                items={getUniqueVendors().map(option => ({
+                                  content: option.label,
+                                  onAction: () => {
+                                    handleFilterValueSelect(option.value, option.label);
+                                    setValuePopoverActive(false);
+                                  },
+                                  active: selectedFilterValues['Vendor']?.includes(option.value)
+                                }))}
+                              />
+                            </div>
+                          )}
+                          
+                          {currentFilterCategory === 'Product type' && (
+                            <div>
+                              <Text variant="bodyMd" as="p">Select product types</Text>
+                              <ActionList
+                                actionRole="menuitem"
+                                items={getUniqueProductTypes().map(option => ({
+                                  content: option.label,
+                                  onAction: () => {
+                                    handleFilterValueSelect(option.value, option.label);
+                                    setValuePopoverActive(false);
+                                  },
+                                  active: selectedFilterValues['Product type']?.includes(option.value)
+                                }))}
+                              />
+                            </div>
+                          )}
+                          
+                          {currentFilterCategory === 'Availability' && (
+                            <div>
+                              <Text variant="bodyMd" as="p">Select availability</Text>
+                              <ActionList
+                                actionRole="menuitem"
+                                items={getUniqueAvailabilityOptions().map(option => ({
+                                  content: option.label,
+                                  onAction: () => {
+                                    handleFilterValueSelect(option.value, option.label);
+                                    setValuePopoverActive(false);
+                                  },
+                                  active: selectedFilterValues['Availability']?.includes(option.value)
+                                }))}
+                              />
+                            </div>
+                          )}
+                          
+                          {currentFilterCategory === 'Collection' && (
+                            <div>
+                              <Text variant="bodyMd" as="p">Select collections</Text>
+                              <ActionList
+                                actionRole="menuitem"
+                                items={getUniqueCollections().map(option => ({
+                                  content: option.label,
+                                  onAction: () => {
+                                    handleFilterValueSelect(option.value, option.label);
+                                    setValuePopoverActive(false);
+                                  },
+                                  active: selectedFilterValues['Collection']?.includes(option.value)
+                                }))}
+                              />
+                            </div>
+                          )}
+                          
+                          {currentFilterCategory === 'SKU' && (
+                            <div>
+                              <Text variant="bodyMd" as="p">Select SKUs</Text>
+                              <ActionList
+                                actionRole="menuitem"
+                                items={getUniqueSKUs().map(option => ({
+                                  content: option.label,
+                                  onAction: () => {
+                                    handleFilterValueSelect(option.value, option.label);
+                                    setValuePopoverActive(false);
+                                  },
+                                  active: selectedFilterValues['SKU']?.includes(option.value)
+                                }))}
+                              />
+                            </div>
+                          )}
+                          
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                            <Button variant="plain" onClick={() => setValuePopoverActive(false)}>Cancel</Button>
+                            <Button variant="primary" onClick={() => setValuePopoverActive(false)}>Done</Button>
+                          </div>
+                        </BlockStack>
+                      </div>
+                    </Popover>
+                    
+                    {/* Clear All Button */}
+                    {activeFilters.length > 0 && (
+                      <div className="Polaris-Filters__ClearAll Polaris-Filters__MultiplePinnedFilterClearAll">
+                        <button 
+                          className="Polaris-Button Polaris-Button--pressable Polaris-Button--variantMonochromePlain Polaris-Button--sizeMicro Polaris-Button--textAlignCenter" 
+                          type="button"
+                          onClick={clearAllFilters}
+                        >
+                          <span className="Polaris-Text--root Polaris-Text--bodySm Polaris-Text--regular">Clear all</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-              
-              {/* Active Filters */}
-              <InlineStack gap="400" blockAlign="center">
-                {activeFilters.map((filter) => (
-                  <Button key={filter.value} onClick={() => handleFilterRemove(filter)}>
-                    {filter.label}
-                  </Button>
-                ))}
-                
-                {/* Clear all filters if any active */}
-                {activeFilters.length > 0 && (
-                  <Button
-                    size="slim"
-                    variant="plain"
-                    onClick={clearAllFilters}
-                  >
-                    Clear all
-                  </Button>
-                )}
-              </InlineStack>
             </BlockStack>
 
             {/* Product List */}
