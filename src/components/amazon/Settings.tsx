@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Page,
   Card,
@@ -14,17 +14,60 @@ import {
   Select,
   Tag,
   Autocomplete,
-  Icon
+  Icon,
+  DropZone,
+  Banner,
+  List,
+  Link
 } from '@shopify/polaris';
-import { EditIcon } from '@shopify/polaris-icons';
+import { EditIcon, ImportIcon, NoteIcon } from '@shopify/polaris-icons';
+
+// Utility hook to prevent background scroll when modal is open
+const usePreventBackgroundScroll = (isOpen: boolean) => {
+  useEffect(() => {
+    if (isOpen) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      
+      // Add styles to prevent scrolling on body
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflowY = 'scroll'; // Keep scrollbar to prevent layout shift
+      
+      return () => {
+        // Remove the styles when the modal closes
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflowY = '';
+        
+        // Restore scroll position
+        window.scrollTo(0, scrollY);
+      };
+    }
+    return undefined;
+  }, [isOpen]);
+};
 
 const Settings: React.FC = () => {
   // Toast state
   const [toastActive, setToastActive] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   
-  // Modal state
+  // Modal states
   const [modalActive, setModalActive] = useState(false);
+  const [csvModalActive, setCsvModalActive] = useState(false);
+  
+  // Apply the background scroll prevention when any modal is open
+  usePreventBackgroundScroll(modalActive || csvModalActive);
+  
+  // CSV upload state
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvUploadError, setCsvUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedCsvRegion, setSelectedCsvRegion] = useState('amazon_com');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingMarketplace, setEditingMarketplace] = useState<{
     id: string;
     name: string;
@@ -109,6 +152,38 @@ const Settings: React.FC = () => {
   }, []);
 
   const handleToastDismiss = useCallback(() => setToastActive(false), []);
+
+  // Function to create and download CSV template
+  const downloadCsvTemplate = useCallback(() => {
+    // Define headers
+    const headers = ['product_handle', 'ASIN', 'Keywords', 'custom_link', 'status'];
+    
+    // Define sample data (3 rows)
+    const sampleData = [
+      ['best-seller-product-2023', 'B07X5FHWSG', 'kitchen gadget', 'https://amazon.com/dp/B07X5FHWSG', '1'],
+      ['everyday-essentials-set', 'B08CZTD6JK', 'daily use', 'https://amazon.com/dp/B08CZTD6JK', '1'],
+      ['limited-edition-item', 'B09NJDWZXP', 'special edition', 'https://amazon.com/dp/B09NJDWZXP', '0']
+    ];
+    
+    // Create CSV content
+    let csvContent = headers.join(',') + '\n';
+    sampleData.forEach(row => {
+      csvContent += row.join(',') + '\n';
+    });
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'amazon_products_template.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast('CSV template downloaded successfully');
+  }, [showToast]);
 
   // Handle edit marketplace
   const handleEditMarketplace = useCallback((marketplaceId: string) => {
@@ -196,10 +271,108 @@ const Settings: React.FC = () => {
     country.label.toLowerCase().includes(countryInputValue.toLowerCase())
   );
 
-  // Handle save settings
-  const handleSaveSettings = useCallback(() => {
-    showToast('Settings saved successfully!');
-  }, [showToast]);
+  // CSV upload handlers
+  const handleCsvModalOpen = useCallback(() => {
+    setCsvModalActive(true);
+    setCsvFile(null);
+    setCsvUploadError(null);
+    setSelectedCsvRegion('amazon_com'); // Default to amazon.com
+  }, []);
+
+  const handleCsvModalClose = useCallback(() => {
+    setCsvModalActive(false);
+    setCsvFile(null);
+    setCsvUploadError(null);
+    // Reset the file input to prevent reopening issues
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, []);
+
+  // Create a ref for the file input to control when it opens
+  const handleFileInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      setCsvFile(files[0]);
+      setCsvUploadError(null);
+    }
+    // Important: Don't reset value here as it causes issues in some browsers
+  }, []);
+
+  const handleDropZoneDrop = useCallback(
+    (_dropFiles: File[], acceptedFiles: File[], _rejectedFiles: File[]) => {
+      if (acceptedFiles.length > 0) {
+        setCsvFile(acceptedFiles[0]);
+        setCsvUploadError(null);
+      }
+    },
+    []
+  );
+
+  const validateCsvFile = (file: File | null): boolean => {
+    if (!file) {
+      setCsvUploadError('Please select a CSV file to upload.');
+      return false;
+    }
+
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      setCsvUploadError('Only CSV files are supported.');
+      return false;
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      setCsvUploadError('File size exceeds 5MB limit.');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleCsvUpload = useCallback(() => {
+    if (!validateCsvFile(csvFile)) {
+      return;
+    }
+
+    setIsUploading(true);
+    
+    // Get the selected marketplace name for the toast message
+    const selectedMarketplace = marketplaces.find(m => m.id === selectedCsvRegion);
+    const marketplaceName = selectedMarketplace ? selectedMarketplace.name : selectedCsvRegion;
+
+    // Simulate upload process
+    setTimeout(() => {
+      setIsUploading(false);
+      handleCsvModalClose();
+      showToast(`CSV file uploaded successfully. Products for ${marketplaceName} will be updated shortly.`);
+    }, 1500);
+
+    // In a real application, you would use fetch or axios to upload the file:
+    /*
+    const formData = new FormData();
+    if (csvFile) {
+      formData.append('file', csvFile);
+      formData.append('region', selectedCsvRegion); // Add the selected region to the form data
+    }
+    
+    fetch('/api/products/bulk-update', {
+      method: 'POST',
+      body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+      setIsUploading(false);
+      handleCsvModalClose();
+      showToast(`CSV file uploaded successfully. ${data.updatedCount} products will be updated.`);
+    })
+    .catch(error => {
+      setIsUploading(false);
+      setCsvUploadError('An error occurred while uploading the file. Please try again.');
+      console.error('Upload error:', error);
+    });
+    */
+  }, [csvFile, handleCsvModalClose, showToast, selectedCsvRegion, marketplaces]);
+
+  // Save functionality is handled per-marketplace in the edit modal
 
   return (
     <Page
@@ -209,6 +382,137 @@ const Settings: React.FC = () => {
       {toastActive && (
         <Toast content={toastMessage} onDismiss={handleToastDismiss} duration={3000} />
       )}
+      
+      {/* Hidden file input for controlled file selection */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={(e) => {
+          handleFileInputChange(e);
+          // Stop event propagation
+          e.stopPropagation();
+        }}
+        onClick={(e) => {
+          // Prevent bubbling that could cause multiple dialogs
+          e.stopPropagation();
+        }}
+        accept=".csv"
+        style={{ display: 'none' }}
+      />
+
+      {/* CSV Upload Modal */}
+      <Modal
+        open={csvModalActive}
+        onClose={handleCsvModalClose}
+        title="Bulk update products via CSV"
+        primaryAction={{
+          content: 'Upload',
+          onAction: handleCsvUpload,
+          loading: isUploading,
+          disabled: !csvFile || isUploading
+        }}
+        secondaryActions={[
+          {
+            content: 'Cancel',
+            onAction: () => {
+              // Just call the close handler - no event to handle in onAction
+              handleCsvModalClose();
+            },
+            disabled: isUploading
+          }
+        ]}
+      >
+        <Modal.Section>
+            <BlockStack gap="400">
+            <Banner
+              title="CSV format requirements"
+              tone="info"
+              icon={NoteIcon}
+            >
+              <List>
+                <List.Item>First row must contain column headers</List.Item>
+                <List.Item>Required columns: product_handle, ASIN, Keywords, custom_link, status</List.Item>
+                <List.Item>Status values: 1 for active, 0 for inactive</List.Item>
+                <List.Item>Maximum file size: 5MB</List.Item>
+              </List>
+              <Box paddingBlockStart="200">
+                <Link onClick={downloadCsvTemplate}>Download CSV template</Link>
+              </Box>
+            </Banner>
+            
+            {/* Region Selection Dropdown - Inline Layout with better alignment */}
+            <InlineStack gap="400" blockAlign="center" align="center">
+              <div style={{width: "200px"}}>
+                <Text as="span" fontWeight="medium">Select Region for Upload:</Text>
+              </div>
+              <div style={{flexGrow: 1}}>
+                <Select
+                  labelHidden
+                  label="Select Region for Upload"
+                  options={marketplaces.map(marketplace => ({ 
+                    label: marketplace.name.replace('_', '.').replace('_', ' '), 
+                    value: marketplace.id 
+                  }))}
+                  onChange={setSelectedCsvRegion}
+                  value={selectedCsvRegion}
+                />
+              </div>
+            </InlineStack>
+            
+            <DropZone
+              accept=".csv"
+              type="file"
+              onDrop={handleDropZoneDrop}
+              errorOverlayText="File type must be .csv"
+              allowMultiple={false}
+              onClick={(e) => {
+                // Prevent the default DropZone behavior of opening a file dialog
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+            >
+              {csvFile ? (
+                <BlockStack gap="200" inlineAlign="center">
+                  <div style={{ padding: '1rem' }}>
+                    <Text as="span" fontWeight="bold">{csvFile.name}</Text>
+                    <Text as="span" tone="subdued"> ({(csvFile.size / 1024).toFixed(2)} KB)</Text>
+                  </div>
+                  <Button onClick={() => {
+                    setCsvFile(null);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = '';
+                    }
+                  }}>Remove file</Button>
+                </BlockStack>
+              ) : (
+                <BlockStack gap="300" inlineAlign="center">
+                  <div style={{ textAlign: 'center', padding: '2rem' }}>
+                    <Text as="p">Drag and drop a CSV file here or</Text>
+                    <Box paddingBlockStart="300">
+                      <Button 
+                        onClick={() => {
+                          // Only open if the modal is still active
+                          if (csvModalActive && fileInputRef.current) {
+                            fileInputRef.current.click();
+                          }
+                        }}
+                      >
+                        Add file
+                      </Button>
+                    </Box>
+                  </div>
+                </BlockStack>
+              )}
+            </DropZone>
+            
+            {csvUploadError && (
+              <Banner tone="critical">
+                {csvUploadError}
+              </Banner>
+            )}
+          </BlockStack>
+        </Modal.Section>
+      </Modal>
       
       {/* Edit Marketplace Modal */}
       <Modal
@@ -227,7 +531,7 @@ const Settings: React.FC = () => {
         ]}
       >
         <Modal.Section>
-          <BlockStack gap="400">
+            <BlockStack gap="400">
             {/* Button Color */}
             <Select
               label="Button color"
@@ -288,9 +592,8 @@ const Settings: React.FC = () => {
                         {countryLabel}
                       </Tag>
                     );
-                  })}
-                </InlineStack>
-              </Box>
+                  })}              </InlineStack>
+            </Box>
             )}
           </BlockStack>
         </Modal.Section>
@@ -300,9 +603,18 @@ const Settings: React.FC = () => {
         {/* Marketplace Settings */}
         <Card>
           <BlockStack gap="400">
-            <Text as="h2" variant="headingMd">
-              Marketplace Settings
-            </Text>
+            <InlineStack align="space-between">
+              <Text as="h2" variant="headingMd">
+                Marketplace Settings
+              </Text>
+              <Button 
+                icon={ImportIcon} 
+                onClick={handleCsvModalOpen}
+                variant="secondary"
+              >
+                Bulk Update Products
+              </Button>
+            </InlineStack>
 
             <IndexTable
               resourceName={{ singular: 'marketplace', plural: 'marketplaces' }}
@@ -349,18 +661,6 @@ const Settings: React.FC = () => {
           </BlockStack>
         </Card>
 
-        {/* Save Button */}
-        <Box paddingBlockStart="400">
-          <InlineStack align="end">
-            <Button
-              variant="primary"
-              onClick={handleSaveSettings}
-            >
-              Save Settings
-            </Button>
-          </InlineStack>
-        </Box>
-        
         {/* Add bottom spacing to match Shopify admin UI */}
         <Box paddingBlockEnd="600">
           {/* This provides the standard 24px bottom spacing using Polaris tokens */}

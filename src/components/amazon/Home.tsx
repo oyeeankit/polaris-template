@@ -24,7 +24,8 @@ import {
   Icon,
   ActionList,
   Popover,
-  Toast
+  Toast,
+  Link
 } from '@shopify/polaris';
 import { EditIcon, XIcon, SearchIcon, AlertBubbleIcon, SaveIcon } from '@shopify/polaris-icons';
 
@@ -36,49 +37,36 @@ type AmazonDomain = 'amazon.com' | 'amazon.ca' | 'amazon.co.uk' | 'amazon.de' | 
 type ProductStatus = 'active' | 'inactive';
 
 type RegionStatus = {
-  [domain in AmazonDomain]?: ProductStatus;
+  [domain in AmazonDomain]: ProductStatus;
 };
 
 // Helper function to create a default RegionStatus object with all regions inactive
 const createDefaultRegionStatus = (): RegionStatus => {
-  const status: RegionStatus = {};
-  const domains: AmazonDomain[] = [
-    'amazon.com', 'amazon.ca', 'amazon.co.uk', 'amazon.de', 'amazon.fr',
-    'amazon.com.mx', 'amazon.com.br', 'amazon.it', 'amazon.es', 'amazon.nl',
-    'amazon.pl', 'amazon.se', 'amazon.com.tr', 'amazon.ae', 'amazon.sa',
-    'amazon.in', 'amazon.co.jp', 'amazon.sg', 'amazon.com.au'
-  ];
-  
-  domains.forEach(domain => {
-    status[domain] = 'inactive';
-  });
-  
-  return status;
-};
-
-// Helper function to get region-specific data for a product and domain
-const getRegionSpecificData = (
-  product: Product, 
-  domain: string
-): { asin: string; keywords: string; customLink: string; status: ProductStatus } => {
-  // Check if product has regionData property and data for this domain
-  if ((product as any).regionData && (product as any).regionData[domain]) {
-    return (product as any).regionData[domain];
-  }
-  
-  // Otherwise, fall back to global product data
   return {
-    asin: product.asin,
-    keywords: product.keywords,
-    customLink: product.customLink,
-    status: 'regionStatus' in product 
-      ? product.regionStatus[domain as AmazonDomain] || 'inactive' 
-      : product.status
+    'amazon.com': 'inactive',
+    'amazon.ca': 'inactive',
+    'amazon.co.uk': 'inactive',
+    'amazon.de': 'inactive',
+    'amazon.fr': 'inactive',
+    'amazon.it': 'inactive',
+    'amazon.es': 'inactive',
+    'amazon.nl': 'inactive',
+    'amazon.pl': 'inactive',
+    'amazon.se': 'inactive',
+    'amazon.com.tr': 'inactive',
+    'amazon.ae': 'inactive',
+    'amazon.sa': 'inactive',
+    'amazon.in': 'inactive',
+    'amazon.co.jp': 'inactive',
+    'amazon.com.mx': 'inactive',
+    'amazon.com.br': 'inactive',
+    'amazon.com.au': 'inactive',
+    'amazon.sg': 'inactive'
   };
 };
-
-// Product with region-specific status
-interface ProductWithRegionStatus {
+  
+// Define the Product interface if not already defined
+interface Product {
   id: string;
   title: string;
   image: string;
@@ -87,22 +75,48 @@ interface ProductWithRegionStatus {
   keywords: string;
   customLink: string;
   regionStatus: RegionStatus;
-  sku?: string;
+}
+  
+// Define ProductWithRegionStatus interface
+interface ProductWithRegionStatus extends Product {
+  regionStatus: { [key in AmazonDomain]: ProductStatus };
+}
+  
+// Define LegacyProduct interface for backward compatibility
+interface LegacyProduct extends Product {
+  status: ProductStatus;
 }
 
-// Legacy product with single status field
-interface LegacyProduct {
-  id: string;
-  title: string;
-  image: string;
-  clicks: number;
-  asin: string;
-  keywords: string;
-  customLink: string;
-  status: 'active' | 'inactive';
-}
-
-type Product = ProductWithRegionStatus | LegacyProduct;
+// Helper function to get region-specific data for a product and domain
+const getRegionSpecificData = (
+  product: any, 
+  domain: string
+): { asin: string; keywords: string; customLink: string; status: string } => {
+  // Check if product has regionData property and data for this domain
+  if (product.regionData && product.regionData[domain]) {
+    return {
+      asin: product.regionData[domain].asin || '-',
+      keywords: product.regionData[domain].keywords || '-',
+      customLink: product.regionData[domain].customLink || '-',
+      status: product.regionData[domain].status || 'inactive'
+    };
+  }
+  
+  // Otherwise, fall back to global product data
+  let status = 'inactive';
+  if (product.regionStatus && product.regionStatus[domain]) {
+    status = product.regionStatus[domain as AmazonDomain];
+  } else if (product.status) {
+    status = product.status;
+  }
+  
+  return {
+    asin: product.asin || '-',
+    keywords: product.keywords || '-',
+    customLink: product.customLink || '-',
+    status: status
+  };
+};
 
 // Enhanced product interface with region-specific data
 interface RegionSpecificData {
@@ -226,6 +240,7 @@ const AmazonBuyButtonDashboard = () => {
       keywords: '-',
       customLink: '-',
       regionStatus: {
+        ...createDefaultRegionStatus(),
         'amazon.com': 'active',
         'amazon.ca': 'inactive',
         'amazon.co.uk': 'active',
@@ -242,6 +257,7 @@ const AmazonBuyButtonDashboard = () => {
       keywords: '-',
       customLink: '-',
       regionStatus: {
+        ...createDefaultRegionStatus(),
         'amazon.com': 'inactive',
         'amazon.ca': 'active',
         'amazon.co.uk': 'inactive',
@@ -258,6 +274,7 @@ const AmazonBuyButtonDashboard = () => {
       keywords: 'bluetooth, headphones',
       customLink: 'https://custom-link.com',
       regionStatus: {
+        ...createDefaultRegionStatus(),
         'amazon.com': 'active',
         'amazon.ca': 'active',
         'amazon.co.uk': 'active',
@@ -274,6 +291,7 @@ const AmazonBuyButtonDashboard = () => {
       keywords: 'coffee, premium',
       customLink: '-',
       regionStatus: {
+        ...createDefaultRegionStatus(),
         'amazon.com': 'active',
         'amazon.ca': 'inactive',
         'amazon.co.uk': 'inactive',
@@ -290,6 +308,7 @@ const AmazonBuyButtonDashboard = () => {
       keywords: 'gaming, mouse, RGB',
       customLink: '-',
       regionStatus: {
+        ...createDefaultRegionStatus(),
         'amazon.com': 'inactive',
         'amazon.ca': 'active',
         'amazon.co.uk': 'inactive',
@@ -306,6 +325,7 @@ const AmazonBuyButtonDashboard = () => {
       keywords: 'skincare, organic',
       customLink: 'https://skincare-link.com',
       regionStatus: {
+        ...createDefaultRegionStatus(),
         'amazon.com': 'active',
         'amazon.ca': 'active',
         'amazon.co.uk': 'active',
@@ -322,6 +342,7 @@ const AmazonBuyButtonDashboard = () => {
       keywords: 'yoga, fitness',
       customLink: '-',
       regionStatus: {
+        ...createDefaultRegionStatus(),
         'amazon.com': 'active',
         'amazon.ca': 'inactive',
         'amazon.co.uk': 'active',
@@ -338,6 +359,7 @@ const AmazonBuyButtonDashboard = () => {
       keywords: 'kitchen, knives',
       customLink: '-',
       regionStatus: {
+        ...createDefaultRegionStatus(),
         'amazon.com': 'inactive',
         'amazon.ca': 'inactive',
         'amazon.co.uk': 'inactive',
@@ -354,6 +376,7 @@ const AmazonBuyButtonDashboard = () => {
       keywords: 'charger, portable',
       customLink: 'https://charger-link.com',
       regionStatus: {
+        ...createDefaultRegionStatus(),
         'amazon.com': 'active',
         'amazon.ca': 'active',
         'amazon.co.uk': 'inactive',
@@ -370,6 +393,7 @@ const AmazonBuyButtonDashboard = () => {
       keywords: 'lamp, LED, desk',
       customLink: '-',
       regionStatus: {
+        ...createDefaultRegionStatus(),
         'amazon.com': 'active',
         'amazon.ca': 'active',
         'amazon.co.uk': 'active',
@@ -386,6 +410,7 @@ const AmazonBuyButtonDashboard = () => {
       keywords: 'hiking, backpack',
       customLink: '-',
       regionStatus: {
+        ...createDefaultRegionStatus(),
         'amazon.com': 'inactive',
         'amazon.ca': 'inactive',
         'amazon.co.uk': 'inactive',
@@ -402,6 +427,7 @@ const AmazonBuyButtonDashboard = () => {
       keywords: 'security, camera, smart',
       customLink: 'https://security-link.com',
       regionStatus: {
+        ...createDefaultRegionStatus(),
         'amazon.com': 'active',
         'amazon.ca': 'inactive',
         'amazon.co.uk': 'active',
@@ -410,6 +436,31 @@ const AmazonBuyButtonDashboard = () => {
       },
     },
   ]);
+
+  // Add helper function to extract Shopify product ID from internal ID format
+  const extractShopifyProductId = (internalId: string) => {
+    // If the ID follows the format new_timestamp_originalId
+    if (internalId.startsWith('new_')) {
+      const parts = internalId.split('_');
+      // Return the original ID (the part after the timestamp)
+      return parts.slice(2).join('_');
+    }
+    // If it's already a Shopify product ID
+    return internalId;
+  };
+
+  // Function to check if a product is already added to the products list
+  const isProductAlreadyAdded = useCallback((productId: string, productName: string) => {
+    // Check if any product in the products list matches this ID (for newly added products)
+    const matchById = products.some(product => product.id.includes(productId));
+    
+    // Check if any product has a matching title (for products that might have been added differently)
+    const matchByTitle = products.some(product => 
+      product.title.toLowerCase() === productName.toLowerCase()
+    );
+    
+    return matchById || matchByTitle;
+  }, [products]);
 
   // Add this state declaration near your other state declarations (around line 69)
   const [activeEditingCell, setActiveEditingCell] = useState<string | null>(null);
@@ -425,35 +476,20 @@ const AmazonBuyButtonDashboard = () => {
           // Store product title for toast message
           productTitle = product.title;
           
-          if ('regionStatus' in product) {
-            // Safe type assertion for selectedAmazonDomain as a key of RegionStatus
-            const domain = selectedAmazonDomain as AmazonDomain;
-            // Get current status, defaulting to inactive if not set
-            const currentStatus = product.regionStatus[domain] || 'inactive';
-            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-            
-            // Store the new status for toast message
-            updatedStatus = newStatus;
-            
-            return { 
-              ...product, 
-              regionStatus: { 
-                ...product.regionStatus, 
-                [domain]: newStatus
-              } 
-            } as ProductWithRegionStatus;
-          } else {
-            // Legacy status field for backward compatibility
-            const newStatus = product.status === 'active' ? 'inactive' : 'active';
-            
-            // Store the new status for toast message
-            updatedStatus = newStatus;
-            
-            return { 
-              ...product, 
-              status: newStatus 
-            } as LegacyProduct;
-          }
+          // Safe type assertion for selectedAmazonDomain as a key of RegionStatus
+          const domain = selectedAmazonDomain as AmazonDomain;
+          // Get current status, defaulting to inactive if not set
+          const currentStatus = product.regionStatus[domain];
+          const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+          // Store the new status for toast message
+          updatedStatus = newStatus;
+          return { 
+            ...product, 
+            regionStatus: { 
+              ...product.regionStatus, 
+              [domain]: newStatus
+            } 
+          };
         }
         return product;
       })
@@ -669,7 +705,7 @@ const AmazonBuyButtonDashboard = () => {
               // Always get the latest status from the viewing product's regionStatus first (which gets updated by toggle)
               // and then fall back to regionData if needed
               const status = 'regionStatus' in viewingProduct 
-                ? viewingProduct.regionStatus[domain as AmazonDomain] || 'inactive'
+                ? viewingProduct.regionStatus[domain as AmazonDomain]
                 : (viewingProduct as any).regionData && 
                   (viewingProduct as any).regionData[domain] && 
                   (viewingProduct as any).regionData[domain].status
@@ -793,7 +829,7 @@ const AmazonBuyButtonDashboard = () => {
               customLink: editForm.customLink || '-',
               // Preserve existing status or default to inactive
               status: 'regionStatus' in updatedProduct ? 
-                updatedProduct.regionStatus[domain as AmazonDomain] || 'inactive' : 
+                updatedProduct.regionStatus[domain as AmazonDomain] : 
                 ((updatedProduct as any).regionData[domain]?.status || 'inactive')
             };
             
@@ -876,7 +912,7 @@ const AmazonBuyButtonDashboard = () => {
     if ('regionStatus' in product) {
       const domain = selectedAmazonDomain as AmazonDomain;
       // If the region isn't defined for this product, return inactive by default
-      return product.regionStatus[domain] || 'inactive';
+      return product.regionStatus[domain as AmazonDomain];
     } 
     // If product has regionData and this domain has a status
     else if ((product as any).regionData && 
@@ -901,6 +937,8 @@ const AmazonBuyButtonDashboard = () => {
     // Otherwise fall back to global value
     return product[field];
   };
+  
+  // We're using the getRegionSpecificData function declared at the top of the file
 
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
@@ -911,14 +949,15 @@ const AmazonBuyButtonDashboard = () => {
       return product.title.toLowerCase().includes(searchValue.toLowerCase());
     });
   }, [products, selectedTab, searchValue, selectedAmazonDomain]);
+  
+  // Calculate total pages after filteredProducts is defined
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   const paginatedProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return filteredProducts.slice(startIndex, endIndex);
   }, [filteredProducts, currentPage, itemsPerPage]);
-
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -1009,6 +1048,8 @@ const AmazonBuyButtonDashboard = () => {
     setPriceRange({ min: '', max: '' });
   };
 
+  // We're using the createDefaultRegionStatus function declared at the top of the file
+  
   const getFilteredProducts = () => {
     return availableProducts.filter(product => {
       // Search filter
@@ -1071,8 +1112,16 @@ const AmazonBuyButtonDashboard = () => {
 
   // Toggle modal function using useCallback
   const toggleProductModal = useCallback(() => {
-    setSelectProductsModalOpen((prev) => !prev);
-    if (!selectProductsModalOpen) {
+    const isOpening = !selectProductsModalOpen;
+    
+    if (!isOpening) {
+      // When closing the modal, always reset the selected products
+      setSelectedProductsForAdd([]);
+    }
+    
+    setSelectProductsModalOpen(isOpening);
+    
+    if (isOpening) {
       // Reset states when opening
       setSelectedProductsForAdd([]);
       setProductSearchValue('');
@@ -1083,6 +1132,13 @@ const AmazonBuyButtonDashboard = () => {
 
   // Handle single product selection (like the pop code example)
   const handleSelectSingleProduct = useCallback((product: any) => {
+    // Check if product is already added
+    if (isProductAlreadyAdded(product.id, product.name)) {
+      // Show warning toast
+      showToast(`${product.name} is already in your list`, true);
+      return;
+    }
+    
     const newProduct = {
       id: `new_${Date.now()}_${product.id}`,
       title: product.name,
@@ -1103,7 +1159,7 @@ const AmazonBuyButtonDashboard = () => {
     
     // Show success toast
     showToast(`${product.name} added`, false);
-  }, [showToast]);
+  }, [showToast, isProductAlreadyAdded]);
   
   // Add this function to reset the welcome card
   const resetWelcomeCard = () => {
@@ -1127,16 +1183,15 @@ const AmazonBuyButtonDashboard = () => {
   const handleRegionStatusToggle = (productId: string, domain: AmazonDomain) => {
     if (viewingProduct) {
       // Create a copy of the product's regionStatus
-      const updatedRegionStatus = viewingProduct && 'regionStatus' in viewingProduct 
-        ? { ...viewingProduct.regionStatus } 
-        : {};
-      
+      const updatedRegionStatus: RegionStatus = {
+        ...createDefaultRegionStatus(),
+        ...(viewingProduct && 'regionStatus' in viewingProduct ? viewingProduct.regionStatus : {})
+      };
       // Get the current status
-      const currentStatus = updatedRegionStatus[domain] || 'inactive';
-      
+      const currentStatus = updatedRegionStatus[domain as AmazonDomain];
       // Toggle the status for the specified domain
       const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-      updatedRegionStatus[domain] = newStatus;
+      updatedRegionStatus[domain as AmazonDomain] = newStatus;
       
       // Create updated viewing product
       const updatedViewingProduct = {
@@ -1297,7 +1352,7 @@ const AmazonBuyButtonDashboard = () => {
                 }}>
                 <IndexTable
                   resourceName={{ singular: 'product', plural: 'products' }}
-                  itemCount={paginatedProducts.length}
+                  itemCount={filteredProducts.length}
                   selectable={false}
                   headings={[
                     { title: 'Product Name' },
@@ -1308,6 +1363,14 @@ const AmazonBuyButtonDashboard = () => {
                     { title: 'Status' },
                     { title: 'Actions' },
                   ]}
+                  pagination={totalPages > 1 ? {
+                    hasPrevious: currentPage > 1,
+                    onPrevious: () => handlePageChange(currentPage - 1),
+                    hasNext: currentPage < totalPages,
+                    onNext: () => handlePageChange(currentPage + 1),
+                    label: `${currentPage} of ${totalPages}`,
+                    accessibilityLabel: `Pagination navigation, current page ${currentPage} of ${totalPages}`
+                  } : undefined}
                 >
                   {paginatedProducts.map((product, index) => (
                     <IndexTable.Row
@@ -1324,7 +1387,14 @@ const AmazonBuyButtonDashboard = () => {
                             textOverflow: 'ellipsis', 
                             whiteSpace: 'nowrap'
                           }} title={product.title}>
-                            {product.title.length > 45 ? `${product.title.substring(0, 45)}...` : product.title}
+                            <Link 
+                              url={`https://admin.shopify.com/products/${extractShopifyProductId(product.id)}`}
+                              external
+                              removeUnderline
+                              monochrome={false}  
+                            >
+                              {product.title.length > 45 ? `${product.title.substring(0, 45)}...` : product.title}
+                            </Link>
                           </div>
                         </Text>
                       </IndexTable.Cell>
@@ -1475,23 +1545,12 @@ const AmazonBuyButtonDashboard = () => {
                   .Polaris-IndexTable-TableCell:last-child {
                     padding-right: 0;
                   }
+                  .Polaris-IndexTable-Pagination {
+                    padding: 16px 0;
+                    margin-top: 0;
+                  }
                 `
               }} />
-              
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <Box paddingBlockStart="500">
-                  <InlineStack align="center">
-                    <Pagination
-                      hasPrevious={currentPage > 1}
-                      onPrevious={() => handlePageChange(currentPage - 1)}
-                      hasNext={currentPage < totalPages}
-                      onNext={() => handlePageChange(currentPage + 1)}
-                      label={`${currentPage} of ${totalPages}`}
-                    />
-                  </InlineStack>
-                </Box>
-              )}
             </Box>
           </BlockStack>
         </Card>
@@ -1551,15 +1610,30 @@ const AmazonBuyButtonDashboard = () => {
                 onChange={(checked) => setEditForm({ ...editForm, hideOtherBuyButtons: checked })}
               />
               
-              <Checkbox
-                label="Improve search ranking"
-                checked={editForm.improveSearchRanking}
-                onChange={(checked) => setEditForm({ 
-                  ...editForm, 
-                  improveSearchRanking: checked,
-                  // Don't clear keywords when turning off search ranking improvement
-                })}
-              />
+              <div>
+                <Checkbox
+                  label={
+                    <span>
+                      Improve search ranking
+                      <span style={{ marginLeft: '8px' }}>
+                        <Link
+                          url="https://help.linkr.com/amazon-search-ranking"
+                          external
+                          removeUnderline
+                        >
+                          Learn more
+                        </Link>
+                      </span>
+                    </span>
+                  }
+                  checked={editForm.improveSearchRanking}
+                  onChange={(checked) => setEditForm({ 
+                    ...editForm, 
+                    improveSearchRanking: checked,
+                    // Don't clear keywords when turning off search ranking improvement
+                  })}
+                />
+              </div>
               
               <TextField
                 label="Keywords"
@@ -1704,25 +1778,41 @@ const AmazonBuyButtonDashboard = () => {
         {/* Select Products Modal */}
         <Modal
           open={selectProductsModalOpen}
-          onClose={toggleProductModal}
+          onClose={() => {
+            setSelectedProductsForAdd([]);
+            toggleProductModal();
+          }}
           title="Edit products"
           primaryAction={{
             content: "Add",
             onAction: () => {
               if (selectedProductsForAdd.length > 0) {
-                // Add selected products to the main products list
-                const newProducts = availableProducts
-                  .filter(product => selectedProductsForAdd.includes(product.id))
-                  .map(product => ({
-                    id: `new_${Date.now()}_${product.id}`,
-                    title: product.name,
-                    image: product.image,
-                    clicks: Math.floor(Math.random() * 100),
-                    asin: '-',
-                    keywords: '-',
-                    customLink: '-',
-                    regionStatus: createDefaultRegionStatus()
-                  }));
+                // Filter out any products that are already in the list
+                const productsToAdd = availableProducts
+                  .filter(product => 
+                    selectedProductsForAdd.includes(product.id) && 
+                    !isProductAlreadyAdded(product.id, product.name)
+                  );
+                
+                if (productsToAdd.length === 0) {
+                  showToast("All selected products are already in your list", true);
+                  // Clear selections before closing
+                  setSelectedProductsForAdd([]);
+                  toggleProductModal();
+                  return;
+                }
+                
+                // Create new product objects
+                const newProducts = productsToAdd.map(product => ({
+                  id: `new_${Date.now()}_${product.id}`,
+                  title: product.name,
+                  image: product.image,
+                  clicks: Math.floor(Math.random() * 100),
+                  asin: '-',
+                  keywords: '-',
+                  customLink: '-',
+                  regionStatus: createDefaultRegionStatus()
+                }));
                 
                 // Add new products to the beginning of the list
                 setProducts(prev => [...newProducts, ...prev]);
@@ -1730,17 +1820,25 @@ const AmazonBuyButtonDashboard = () => {
                 // Show success toast
                 showToast(`${newProducts.length} product${newProducts.length > 1 ? 's' : ''} added successfully`);
               }
+              
+              // Clear selections before closing
+              setSelectedProductsForAdd([]);
               toggleProductModal();
             },
           }}
           secondaryActions={[
             {
               content: 'Cancel',
-              onAction: toggleProductModal,
+              onAction: () => {
+                setSelectedProductsForAdd([]);
+                toggleProductModal();
+              },
             },
           ]}
+          size="large"
         >
           <Modal.Section>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
             {/* Search and Filter Section */}
             <BlockStack gap="400">
               {/* Search Row */}
@@ -1772,9 +1870,9 @@ const AmazonBuyButtonDashboard = () => {
             </InlineStack>
 
               {/* Polaris-style Filter UI */}
-              <div className="Polaris-Filters__FiltersWrapper Polaris-Filters__FiltersWrapperWithAddButton" aria-live="polite">
-                <div className="Polaris-Filters__FiltersInner">
-                  <div className="Polaris-Filters__FiltersStickyArea">
+              <div className="Polaris-Filters__FiltersWrapper Polaris-Filters__FiltersWrapperWithAddButton" aria-live="polite" style={{ overflow: 'visible' }}>
+                <div className="Polaris-Filters__FiltersInner" style={{ overflow: 'visible' }}>
+                  <div className="Polaris-Filters__FiltersStickyArea" style={{ overflow: 'visible' }}>
                     {/* Active Filter Pills */}
                     {activeFilters.map((filter) => (
                       <div key={`${filter.key}-${filter.value}`}>
@@ -1836,7 +1934,7 @@ const AmazonBuyButtonDashboard = () => {
                               >
                                 <span className="Polaris-Text--root Polaris-Text--bodySm Polaris-Text--base">Add filter </span>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                  <path d="M10.75 5.75c0-.414-.336-.75-.75-.75s-.75.336-.75.75v3.5h-3.5c-.414 0-.75.336-.75.75s.336.75.75.75h3.5v3.5c0 .414.336.75.75.75s.75-.336.75-.75v-3.5h3.5c.414 0 .75-.336.75-.75s-.336-.75-.75-.75h-3.5v-3.5Z"></path>
+                                  <path d="M10.75 5.75c0-.414-.336-.75-.75-.75s-.75.336-.75.75v3.5h-3.5c-.414 0-.75.336-.75.75s.336.75.75.75h3.5v3.5c0 .414.336.75.75.75s.75-.336.75-.75v-3.5h3.5c.414 0 .75-.336.75-.75s-.336-.75-.75h-3.5v-3.5Z"></path>
                                 </svg>
                               </button>
                             }
@@ -1925,7 +2023,7 @@ const AmazonBuyButtonDashboard = () => {
                           {currentFilterCategory === 'Product type' && (
                             <div>
                               <Text variant="bodyMd" as="p">Select product types</Text>
-                              <ActionList
+                                                           <ActionList
                                 actionRole="menuitem"
                                 items={getUniqueProductTypes().map(option => ({
                                   content: option.label,
@@ -1997,29 +2095,27 @@ const AmazonBuyButtonDashboard = () => {
                         </BlockStack>
                       </div>
                     </Popover>
-                    
-                    {/* Clear All Button */}
-                    {activeFilters.length > 0 && (
-                      <div className="Polaris-Filters__ClearAll Polaris-Filters__MultiplePinnedFilterClearAll">
-                        <button 
-                          className="Polaris-Button Polaris-Button--pressable Polaris-Button--variantMonochromePlain Polaris-Button--sizeMicro Polaris-Button--textAlignCenter" 
-                          type="button"
-                          onClick={clearAllFilters}
-                        >
-                          <span className="Polaris-Text--root Polaris-Text--bodySm Polaris-Text--regular">Clear all</span>
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
             </BlockStack>
 
-            {/* Product List */}
+            {/* Product List - Only this section is scrollable */}
             <Box paddingBlockStart="400">
-              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              <div style={{ 
+                height: '350px', 
+                maxHeight: '45vh',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                paddingRight: '10px', /* Add some padding to prevent content touching scrollbar */
+                /* Custom scrollbar styling for better appearance */
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#c4cdd5 #f4f6f8',
+                marginBottom: '8px' /* Add a small margin to separate from footer */
+              }}>
                 {getFilteredProducts().map((product) => {
                   const isSelected = selectedProductsForAdd.includes(product.id);
+                  const isAlreadyAdded = isProductAlreadyAdded(product.id, product.name);
                   return (
                     <div
                       key={product.id}
@@ -2028,9 +2124,11 @@ const AmazonBuyButtonDashboard = () => {
                         alignItems: 'center',
                         padding: '12px 0',
                         borderBottom: '1px solid #e1e3e5',
-                        cursor: 'pointer',
+                        cursor: isAlreadyAdded ? 'default' : 'pointer',
+                        opacity: isAlreadyAdded ? 0.7 : 1,
                       }}
                       onClick={() => {
+                        if (isAlreadyAdded) return; // Don't allow selecting already added products
                         if (isSelected) {
                           setSelectedProductsForAdd(prev => 
                             prev.filter(id => id !== product.id)
@@ -2045,7 +2143,8 @@ const AmazonBuyButtonDashboard = () => {
                         <Checkbox
                           label=""
                           labelHidden
-                          checked={isSelected}
+                          checked={isSelected || isAlreadyAdded}
+                          disabled={isAlreadyAdded}
                           onChange={() => {}} // Handled by parent onClick
                         />
                       </div>
@@ -2062,7 +2161,14 @@ const AmazonBuyButtonDashboard = () => {
                       {/* Product Details */}
                       <div style={{ flex: 1 }}>
                         <Text as="span" variant="bodyMd" fontWeight="medium">
-                          {product.name}
+                          <Link 
+                            url={`https://admin.shopify.com/products/${extractShopifyProductId(product.id)}`}
+                            external
+                            removeUnderline
+                            monochrome={false}
+                          >
+                            {product.name}
+                          </Link>
                         </Text>
                       </div>
                     </div>
@@ -2079,8 +2185,59 @@ const AmazonBuyButtonDashboard = () => {
                 )}
               </div>
             </Box>
+            </div>
           </Modal.Section>
         </Modal>
+
+        {/* Custom styling to prevent overflow in modal */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            /* Reset to Polaris default modal behaviors with minimal overrides */
+            .Polaris-Modal-Dialog__Modal {
+              overflow-y: visible;
+              display: flex;
+              flex-direction: column;
+            }
+            
+            /* Ensure modal section doesn't force scrolling */
+            .Polaris-Modal-Section {
+              overflow: visible;
+              padding-bottom: 8px;
+              padding-top: 16px;
+            }
+            
+            /* Ensure body doesn't force scrolling */
+            .Polaris-Modal__Body {
+              overflow-y: visible;
+              padding-bottom: 16px; /* Reduced padding to eliminate large gap */
+            }
+            
+            /* Style large modals */
+            .Polaris-Modal--sizeLarge .Polaris-Modal-Dialog__Container {
+              width: 95%;
+              max-width: 900px !important;
+              max-height: 80vh !important;
+            }
+            
+            /* Ensure footer is always visible at the bottom */
+            .Polaris-Modal-Footer {
+              border-top: 1px solid #e1e3e5;
+              padding: 12px 24px;
+              display: flex;
+              justify-content: flex-end;
+              position: sticky;
+              bottom: 0;
+              z-index: 10;
+              background-color: #ffffff;
+              margin-top: 0;
+            }
+            
+            /* Fix button spacing in footer */
+            .Polaris-Modal-Footer .Polaris-Button + .Polaris-Button {
+              margin-left: 8px;
+            }
+          `
+        }} />
 
         {/* Toast for notifications */}
         {toastActive && (
