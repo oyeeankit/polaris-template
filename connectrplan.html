@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connectr Plan - SKU Pull Pricing</title>
+  <meta name="shopify-api-key" content="%SHOPIFY_API_KEY%" />
+  <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
+  <script src="https://cdn.shopify.com/shopifycloud/polaris.js"></script>
+</head>
+<body>
+  <s-page>
+    <s-layout>
+      <s-layout-section>
+        <s-section>
+          <s-card>
+            <s-text variant="heading-lg" type="strong">Connectr Plans</s-text>
+          </s-card>
+        </s-section>
+        <div style="margin: 24px 0;"></div>
+        <s-stack direction="vertical" gap="none">
+          <s-section>
+            <s-card>
+              <s-table>
+                <s-table-header-row>
+                  <s-table-header style="background:#F6F6F7; vertical-align:middle;">
+                    <s-stack direction="inline" gap="tight" alignment="center">
+                      <s-text variant="heading-sm" type="strong">SKU Pull Pricing</s-text>
+                      <s-icon 
+                        type="info" 
+                        onclick="window.open('https://help.shopify.com', '_blank')"
+                        title="Learn more"
+                        style="cursor: pointer; position: relative; top: -px;">
+                      </s-icon>
+                    </s-stack>
+                  </s-table-header>
+                  <s-table-header style="background:#F6F6F7; vertical-align:middle;"></s-table-header>
+                  <s-table-header style="background:#F6F6F7; vertical-align:middle;"></s-table-header>
+                  <s-table-header style="background:#F6F6F7; text-align:right; vertical-align:middle;">
+                    <s-text tone="subdued" style="font-size:0.98rem;">USD 1 = 100 SKU pull credits</s-text>
+                  </s-table-header>
+                </s-table-header-row>
+                <s-table-header-row>
+                  <s-table-header> </s-table-header>
+                  <s-table-header> </s-table-header>
+                  <s-table-header> </s-table-header>
+                  <s-table-header> </s-table-header>
+                </s-table-header-row>
+                <s-table-body>
+                  <s-table-row>
+                    <s-table-cell>
+                      <s-text variant="heading-xl" type="strong">3184</s-text><br>
+                      <s-text tone="subdued" style="font-size:1rem;">SKU Pull Credits</s-text>
+                    </s-table-cell>
+                    <s-table-cell style="padding-right:4px;">
+                      <s-text>200 credits</s-text>
+                    </s-table-cell>
+                    <s-table-cell style="padding-left:4px;">
+                      <input type="number" min="1" value="2" style="width:60px;padding:4px 8px;border-radius:6px;border:1px solid #E1E3E5;font-size:1rem;">
+                    </s-table-cell>
+                    <s-table-cell>
+                      <s-button variant="primary" style="width:120px;">Buy Credits</s-button>
+                    </s-table-cell>
+                  </s-table-row>
+               
+                </s-table-body>
+              </s-table>
+            </s-card>
+          </s-section>
+          <div style="margin: 24px 0;"></div>
+          <s-section>
+            <s-card>
+              <s-table>
+                <s-table-header-row>
+                  <s-table-header style="background:#F6F6F7; vertical-align:middle;">
+                    <s-text variant="heading-sm" type="strong">Maintenance Plan</s-text>
+                  </s-table-header>
+                  <s-table-header style="background:#F6F6F7; vertical-align:middle;"></s-table-header>
+                  <s-table-header style="background:#F6F6F7; vertical-align:middle;"></s-table-header>
+                  <s-table-header style="background:#F6F6F7; text-align:right; vertical-align:middle;">
+                    <s-badge tone="warning">Current plan $6/month</s-badge>
+                  </s-table-header>
+                </s-table-header-row>
+                <s-table-header-row>
+                  <s-table-header> </s-table-header>
+                  <s-table-header> </s-table-header>
+                  <s-table-header> </s-table-header>
+                  <s-table-header> </s-table-header>
+                </s-table-header-row>
+                <s-table-body>
+                  <s-table-row>
+                    <s-table-cell>Pull</s-table-cell>
+                    <s-table-cell>Unlimited SKUs <span style="color:#6d7175;">(credits required)</span></s-table-cell>
+                    <s-table-cell></s-table-cell>
+                    <s-table-cell></s-table-cell>
+                  </s-table-row>
+                  <s-table-row>
+                    <s-table-cell>Push</s-table-cell>
+                    <s-table-cell>Unlimited SKUs</s-table-cell>
+                    <s-table-cell></s-table-cell>
+                    <s-table-cell></s-table-cell>
+                  </s-table-row>
+                  <s-table-row>
+                    <s-table-cell><a href="#" style="color:#0099e5;">Sync</a></s-table-cell>
+                    <s-table-cell>$0 / month</s-table-cell>
+                    <s-table-cell>
+                      <s-badge tone="info">0 SKU Sync Limit</s-badge>
+                    </s-table-cell>
+                    <s-table-cell>
+                      <input type="number" min="0" value="0" style="width:60px;padding:4px 8px;border-radius:6px;border:1px solid #E1E3E5;font-size:1rem;">
+                    </s-table-cell>
+                  </s-table-row>
+                  <s-table-row>
+                    <s-table-cell><a href="#" style="color:#0099e5;">FBM-sync</a></s-table-cell>
+                    <s-table-cell>$6 / month</s-table-cell>
+                    <s-table-cell></s-table-cell>
+                    <s-table-cell>
+                      <s-stack direction="inline" gap="extraTight">
+                        <s-button size="slim" variant="primary" tone="success">ON</s-button>
+                        <s-button size="slim" variant="secondary">OFF</s-button>
+                      </s-stack>
+                    </s-table-cell>
+                  </s-table-row>
+                  <s-table-row>
+                    <s-table-cell><a href="#" style="color:#0099e5;">Ship with FBA</a></s-table-cell>
+                    <s-table-cell>$6 / month</s-table-cell>
+                    <s-table-cell></s-table-cell>
+                    <s-table-cell>
+                      <s-stack direction="inline" gap="extraTight">
+                        <s-button size="slim" variant="primary" tone="success">ON</s-button>
+                        <s-button size="slim" variant="secondary">OFF</s-button>
+                      </s-stack>
+                    </s-table-cell>
+                  </s-table-row>
+                  <s-table-row>
+                    <s-table-cell><b>Total</b></s-table-cell>
+                    <s-table-cell><b>$6 / month</b></s-table-cell>
+                    <s-table-cell></s-table-cell>
+                    <s-table-cell>
+                      <s-button variant="primary" tone="success">Update Plan</s-button>
+                    </s-table-cell>
+                  </s-table-row>
+                </s-table-body>
+              </s-table>
+            </s-card>
+          </s-section>
+        </s-stack>
+      </s-layout-section>
+    </s-layout>
+  </s-page>
+</body>
+</html>
